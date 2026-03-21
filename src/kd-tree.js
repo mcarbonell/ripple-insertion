@@ -92,8 +92,7 @@ export class OptimizedKDTree {
     // Rebuild if threshold reached or tree too unbalanced
     const shouldRebuild =
       this.insertionCount >= this.REBUILD_THRESHOLD ||
-      (this.root &&
-        this.insertionCount > Math.sqrt(this.points.length) * 2);
+      (this.root && this.insertionCount > Math.sqrt(this.points.length) * 2);
 
     if (shouldRebuild) {
       this.rebuild();
@@ -141,30 +140,21 @@ export class OptimizedKDTree {
       points[medianIndex].data
     );
     node.left = this._buildTree(points.slice(0, medianIndex), depth + 1);
-    node.right = this._buildTree(
-      points.slice(medianIndex + 1),
-      depth + 1
-    );
+    node.right = this._buildTree(points.slice(medianIndex + 1), depth + 1);
     return node;
   }
 
   nearestNeighbors(x, y, k) {
     if (!this.root) return [];
     const point = [x, y];
-    const neighbors = new FastBinaryHeap(
-      (a, b) => a.distance - b.distance,
-      k
-    );
+    const neighbors = new FastBinaryHeap((a, b) => a.distance - b.distance, k);
     this._searchNearest(this.root, point, k, neighbors);
     return neighbors.toArray().map((n) => n.node.data);
   }
 
   _searchNearest(node, point, k, neighbors) {
     if (!node) return;
-    const d = Math.hypot(
-      point[0] - node.point[0],
-      point[1] - node.point[1]
-    );
+    const d = Math.hypot(point[0] - node.point[0], point[1] - node.point[1]);
     neighbors.push({ node, distance: d });
 
     const axis = node.axis;
@@ -174,10 +164,7 @@ export class OptimizedKDTree {
 
     this._searchNearest(nearChild, point, k, neighbors);
 
-    if (
-      neighbors.size() < k ||
-      Math.abs(diff) < neighbors.peek().distance
-    ) {
+    if (neighbors.size() < k || Math.abs(diff) < neighbors.peek().distance) {
       this._searchNearest(farChild, point, k, neighbors);
     }
   }

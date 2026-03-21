@@ -169,15 +169,15 @@ export class RippleInsertion extends EventTarget {
     this.edgeWeightType = options.edgeWeightType || 'EUC_2D';
     this.explicitWeights = options.explicitWeights || null;
     this.maxK = options.maxK || 20; // Number of neighbors to consider
-    
+
     this.cities = [];
     this.tour = new DoublyLinkedTour();
     this.kdtree = new OptimizedKDTree();
     this.setPool = new SetPool(20);
-    
-    // Original coordinates for exact distance calculation 
+
+    // Original coordinates for exact distance calculation
     // when using visualization scaling
-    this.originalCities = []; 
+    this.originalCities = [];
   }
 
   clear() {
@@ -239,7 +239,7 @@ export class RippleInsertion extends EventTarget {
       x: originalX !== null ? originalX : x,
       y: originalY !== null ? originalY : y,
     };
-    
+
     this.kdtree.insert(newCity);
 
     // Initial simple circular tour
@@ -247,7 +247,9 @@ export class RippleInsertion extends EventTarget {
       this.tour.insertAfter(this.tour.head, id);
       if (this.tour.size === 3) {
         // Complete the circle when 3 cities are added
-        const nodes = Array.from(this.tour).map(cId => this.tour.getNode(cId));
+        const nodes = Array.from(this.tour).map((cId) =>
+          this.tour.getNode(cId)
+        );
         if (nodes.length === 3) {
           nodes[0].next = nodes[1];
           nodes[1].prev = nodes[0];
@@ -266,7 +268,11 @@ export class RippleInsertion extends EventTarget {
 
   _insertAndOptimize(cityId) {
     const city = this.cities[cityId];
-    const nearestNeighbors = this.kdtree.nearestNeighbors(city.x, city.y, this.maxK);
+    const nearestNeighbors = this.kdtree.nearestNeighbors(
+      city.x,
+      city.y,
+      this.maxK
+    );
 
     let bestInsertion = { cost: Infinity, afterNode: null };
     const checkedNodes = new Set();
@@ -292,7 +298,11 @@ export class RippleInsertion extends EventTarget {
       let current = this.tour.head;
       let count = 0;
       do {
-        const cost = this.insertionCost(cityId, current.cityId, current.next.cityId);
+        const cost = this.insertionCost(
+          cityId,
+          current.cityId,
+          current.next.cityId
+        );
         if (cost < bestInsertion.cost) {
           bestInsertion = { cost, afterNode: current };
         }
@@ -311,7 +321,10 @@ export class RippleInsertion extends EventTarget {
     startNodes.add(bestInsertion.afterNode.cityId);
     startNodes.add(bestInsertion.afterNode.next.cityId);
 
-    for (const neighbor of nearestNeighbors.slice(0, Math.min(5, nearestNeighbors.length))) {
+    for (const neighbor of nearestNeighbors.slice(
+      0,
+      Math.min(5, nearestNeighbors.length)
+    )) {
       if (this.tour.has(neighbor.id)) {
         startNodes.add(neighbor.id);
       }
@@ -320,7 +333,9 @@ export class RippleInsertion extends EventTarget {
     const rippleStats = this._optimizeRipple(startNodes);
     this.setPool.release(startNodes);
 
-    this.dispatchEvent(new CustomEvent('tourUpdated', { detail: { id: cityId } }));
+    this.dispatchEvent(
+      new CustomEvent('tourUpdated', { detail: { id: cityId } })
+    );
     return rippleStats;
   }
 
@@ -344,16 +359,28 @@ export class RippleInsertion extends EventTarget {
         continue;
       }
 
-      this.dispatchEvent(new CustomEvent('rippleStep', { detail: { currentCityId, modified: new Set(modified) } }));
+      this.dispatchEvent(
+        new CustomEvent('rippleStep', {
+          detail: { currentCityId, modified: new Set(modified) },
+        })
+      );
 
       const city = this.cities[currentCityId];
-      const spatialNeighbors = this.kdtree.nearestNeighbors(city.x, city.y, this.maxK);
+      const spatialNeighbors = this.kdtree.nearestNeighbors(
+        city.x,
+        city.y,
+        this.maxK
+      );
 
       const prevCityId = currentNode.prev.cityId;
       const nextCityId = currentNode.next.cityId;
       const currentCost =
-        this.dist(this.cities[prevCityId], city) + this.dist(city, this.cities[nextCityId]);
-      const bridgedCost = this.dist(this.cities[prevCityId], this.cities[nextCityId]);
+        this.dist(this.cities[prevCityId], city) +
+        this.dist(city, this.cities[nextCityId]);
+      const bridgedCost = this.dist(
+        this.cities[prevCityId],
+        this.cities[nextCityId]
+      );
       const savingByRemoval = currentCost - bridgedCost;
 
       let bestMove = { gain: 0, targetNode: null };
@@ -368,13 +395,20 @@ export class RippleInsertion extends EventTarget {
         ];
 
         for (const pos of candidatePositions) {
-          if (pos.after.cityId === currentCityId || pos.before.cityId === currentCityId) continue;
+          if (
+            pos.after.cityId === currentCityId ||
+            pos.before.cityId === currentCityId
+          )
+            continue;
           if (pos.after === currentNode || pos.before === currentNode) continue;
 
           const costToInsert =
             this.dist(this.cities[pos.after.cityId], city) +
             this.dist(city, this.cities[pos.before.cityId]) -
-            this.dist(this.cities[pos.after.cityId], this.cities[pos.before.cityId]);
+            this.dist(
+              this.cities[pos.after.cityId],
+              this.cities[pos.before.cityId]
+            );
 
           const gain = savingByRemoval - costToInsert;
 
