@@ -298,13 +298,25 @@ export class RippleInsertion extends EventTarget {
       const neighborNode = this.tour.getNode(neighbor.id);
       if (neighborNode && !checkedNodes.has(neighborNode)) {
         checkedNodes.add(neighborNode);
-        const cost = this.insertionCost(
+        
+        // Check inserting AFTER the neighbor
+        const costAfter = this.insertionCost(
           cityId,
           neighborNode.cityId,
           neighborNode.next.cityId
         );
-        if (cost < bestInsertion.cost) {
-          bestInsertion = { cost, afterNode: neighborNode };
+        if (costAfter < bestInsertion.cost) {
+          bestInsertion = { cost: costAfter, afterNode: neighborNode };
+        }
+
+        // Check inserting BEFORE the neighbor (i.e., after its prev)
+        const costBefore = this.insertionCost(
+          cityId,
+          neighborNode.prev.cityId,
+          neighborNode.cityId
+        );
+        if (costBefore < bestInsertion.cost) {
+          bestInsertion = { cost: costBefore, afterNode: neighborNode.prev };
         }
       }
     }
@@ -337,10 +349,7 @@ export class RippleInsertion extends EventTarget {
     startNodes.add(bestInsertion.afterNode.cityId);
     startNodes.add(bestInsertion.afterNode.next.cityId);
 
-    for (const neighbor of nearestNeighbors.slice(
-      0,
-      Math.min(5, nearestNeighbors.length)
-    )) {
+    for (const neighbor of nearestNeighbors) {
       if (this.tour.has(neighbor.id)) {
         startNodes.add(neighbor.id);
       }
