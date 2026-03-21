@@ -126,16 +126,16 @@ async function runBenchmark() {
   console.table(results);
 
   // Save Markdown Report
-  generateMarkdownReport(results, useOnion);
-}
+  generateMarkdownReport(results, useOnion, 15); // Pass maxK to report
+  }
 
-function generateMarkdownReport(results, usedOnion) {
+  function generateMarkdownReport(results, usedOnion, maxK) {
   const mdPath = path.join(process.cwd(), 'benchmark_report.md');
 
   let md = `# Ripple Insertion Benchmark Report\n\n`;
   md += `**Date:** ${new Date().toISOString().split('T')[0]}\n`;
-  md += `**Strategy:** ${usedOnion ? 'Onion Peeling' : 'File Order'}\n\n`;
-
+  md += `**Strategy:** ${usedOnion ? 'Onion Peeling' : 'File Order'}\n`;
+  md += `**Neighbors (M):** ${maxK}\n\n`;
   md += `| Instance | N | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) | Ripples/Ins |\n`;
   md += `|---|---|---|---|---|---|---|---|\n`;
 

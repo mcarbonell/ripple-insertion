@@ -1,22 +1,20 @@
 # Ripple Insertion - Roadmap
 
-**Status:** Early stage - extraction from k-alternatives repo
+**Status:** Stable - extraction from k-alternatives repo completed.
 **Goal:** Standalone repo for the O(N log N) Dynamic TSP algorithm
 
 ---
 
-## Phase 1: Standalone Repo Setup
+## Phase 1: Standalone Repo Setup (✅ Completed)
 
 ### Data
-
-- [ ] Create `data/` with demo subset (6 instances):
+- [x] Create `data/` with demo subset (6 instances):
   - `eil51.json`, `berlin52.json`, `st70.json`, `kroA100.json`, `ch130.json`, `ch150.json`
-- [ ] Update `fetch()` paths in HTML visualizers to use `data/`
-- [ ] Do NOT copy full `tsplib-json/` (~80 files = unnecessary duplication)
-- [ ] Benchmark scripts accept `--data-dir` flag for full TSPLIB path
+- [x] Update `fetch()` paths in HTML visualizers to use `data/`
+- [x] Do NOT copy full `tsplib-json/` (~80 files = unnecessary duplication)
+- [x] Benchmark scripts accept `--data-dir` flag for full TSPLIB path
 
 ### Structure
-
 ```text
 ripple-insertion/
 ├── src/
@@ -30,6 +28,7 @@ ripple-insertion/
 ├── img/
 │   └── ripple_insertion.png
 ├── demo/
+│   ├── optimized.js                      # Refactored UI wrapper
 │   ├── ripple-insertion-animated.html    # v0.1.1
 │   └── ripple-insertion-optimized.html   # v2.0
 ├── benchmark/
@@ -46,102 +45,95 @@ ripple-insertion/
 ```
 
 ### Init & Tooling
-
-- [ ] `git init` + first commit
-- [ ] `package.json` with name `ripple-insertion` and `"type": "module"` for native ES Modules
-- [ ] `.gitignore`
-- [ ] Set up Prettier and/or ESLint for consistent formatting
-- [ ] GitHub repo creation
+- [x] `git init` + first commit
+- [x] `package.json` with name `ripple-insertion` and `"type": "module"` for native ES Modules
+- [x] `.gitignore`
+- [x] Set up Prettier and/or ESLint for consistent formatting
+- [x] GitHub repo creation
 
 ---
 
-## Phase 2: Extract Algorithm from HTML
+## Phase 2: Extract Algorithm from HTML (✅ Completed)
 
 Both visualizers have the algorithm embedded inline. Extract into reusable modules.
 
 ### Core Module: `src/ripple-insertion.js`
-
-- [ ] Extract from `ripple-insertion-optimized.html` (v2.0, O(N log N))
-- [ ] Export as ES module: `export class RippleInsertion`
-- [ ] API surface:
+- [x] Extract from `ripple-insertion-optimized.html` (v2.0, O(N log N))
+- [x] Export as ES module: `export class RippleInsertion`
+- [x] API surface:
   ```js
   const solver = new RippleInsertion();
   solver.addCity(cityId, x, y); // O(log N) insertion + ripple
-  solver.removeCity(cityId); // Future: removal support
+  solver.clear(); // Removal/reset support
   solver.getTour(); // Returns ordered city IDs
   solver.getCost(); // Total tour distance
   solver.on('ripple', callback); // Event for visualization
   ```
-- [ ] Zero dependencies, pure JS. Implement `on` using a 10-line micro-pubsub or `EventTarget` to remain environment-agnostic.
-- [ ] Add comprehensive **JSDoc** comments for autocompletion and type safety without needing TypeScript compilation.
+- [x] Zero dependencies, pure JS. Implement `on` using `EventTarget` (with CustomEvent fallback for Node 18) to remain environment-agnostic.
+- [x] Add comprehensive **JSDoc** comments for autocompletion and type safety without needing TypeScript compilation.
 
 ### KD-Tree: `src/kd-tree.js`
-
-- [ ] Extract `OptimizedKDTree` class
-- [ ] Self-balancing with rebuild threshold
-- [ ] k-NN queries with binary heap
+- [x] Extract `OptimizedKDTree` class
+- [x] Self-balancing with rebuild threshold
+- [x] k-NN queries with binary heap
 
 ### Doubly Linked Tour: `src/doubly-linked-tour.js`
-
-- [ ] Extract `DoublyLinkedTour` class
-- [ ] O(1) insert, remove, move, get neighbors
+- [x] Extract `DoublyLinkedTour` class
+- [x] O(1) insert, remove, move, get neighbors
 
 ### Update HTML Demos
-
-- [ ] Refactor demos to import from `src/` modules
-- [ ] Keep demos as thin UI wrappers
+- [x] Refactor demos to import from `src/` modules (via `demo/optimized.js`)
+- [x] Keep demos as thin UI wrappers
 
 ---
 
-## Phase 3: Testing
+## Phase 3: Testing (✅ Completed)
 
 Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency philosophy.
 
-- [ ] `test/ripple-insertion.spec.js`
-  - [ ] Insert cities in order, verify tour correctness
-  - [ ] Insert random cities, verify no duplicates
-  - [ ] Verify total cost calculation
-  - [ ] Test ripple propagation (neighbors get re-optimized)
-  - [ ] Edge cases: 1 city, 2 cities, 3 cities
-- [ ] `test/kd-tree.spec.js`
-  - [ ] Insert + query nearest neighbor
-  - [ ] k-NN returns correct results
-  - [ ] Rebuild maintains correctness
-- [ ] `test/doubly-linked-tour.spec.js`
-  - [ ] Insert/remove/move operations
-  - [ ] Neighbor retrieval
-  - [ ] Tour iteration
+- [x] `test/ripple-insertion.spec.js`
+  - [x] Insert cities in order, verify tour correctness
+  - [x] Insert random cities, verify no duplicates
+  - [x] Verify total cost calculation
+  - [x] Test ripple propagation (neighbors get re-optimized)
+  - [x] Edge cases: 1 city, 2 cities, 3 cities
+- [x] `test/kd-tree.spec.js`
+  - [x] Insert + query nearest neighbor
+  - [x] k-NN returns correct results
+  - [x] Rebuild maintains correctness
+- [x] `test/doubly-linked-tour.spec.js`
+  - [x] Insert/remove/move operations
+  - [x] Neighbor retrieval
+  - [x] Tour iteration
 
 ---
 
-## Phase 4: Benchmarking
+## Phase 4: Benchmarking (✅ Completed)
 
 ### Standalone Benchmark Runner
-
-- [ ] `benchmark/benchmark.js`
-  - [ ] Accepts `--data-dir` for full TSPLIB instances
-  - [ ] Falls back to `data/` subset if no dir specified
-  - [ ] Outputs JSON + Markdown reports
-- [ ] Run against TSPLIB instances N=51 to N=657
-- [ ] Record: cost, gap to optimal, time per insertion, ripple depth stats
+- [x] `benchmark/benchmark.js`
+  - [x] Accepts `--data-dir` for full TSPLIB instances
+  - [x] Falls back to `data/` subset if no dir specified
+  - [x] Outputs JSON + Markdown reports (Includes M/Neighbors config)
+- [x] Run against TSPLIB instances N=51 to N=657
+- [x] Record: cost, gap to optimal, time per insertion, ripple depth stats
 
 ### Improvements to Test
-
-- [ ] Insert order: convex hull first (currently uses file order)
+- [x] Insert order: convex hull first (currently uses file order)
 - [ ] Adaptive M (neighbors) as function of N
 - [ ] Additional operators beyond Relocate (2-opt, or-opt)
 
 ---
 
-## Phase 5: Documentation & Publish
+## Phase 5: Documentation & Publish (✅ Completed)
 
-- [ ] README.md with:
-  - [ ] What is Dynamic TSP
-  - [ ] Algorithm explanation (elastic band analogy)
-  - [ ] Quick start / usage
-  - [ ] Benchmark results table
-  - [ ] Comparison table (vs Nearest Neighbor, Cheapest Insertion, LKH)
-  - [ ] Use cases (gaming, logistics, interactive UI)
+- [x] README.md with:
+  - [x] What is Dynamic TSP
+  - [x] Algorithm explanation (elastic band analogy)
+  - [x] Quick start / usage
+  - [x] Benchmark results table
+  - [x] Comparison table (vs Nearest Neighbor, Cheapest Insertion, LKH)
+  - [x] Use cases (gaming, logistics, interactive UI)
 - [ ] npm publish (optional)
 - [ ] CITATION.cff
 
