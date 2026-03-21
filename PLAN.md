@@ -8,6 +8,7 @@
 ## Phase 1: Standalone Repo Setup (✅ Completed)
 
 ### Data
+
 - [x] Create `data/` with demo subset (6 instances):
   - `eil51.json`, `berlin52.json`, `st70.json`, `kroA100.json`, `ch130.json`, `ch150.json`
 - [x] Update `fetch()` paths in HTML visualizers to use `data/`
@@ -15,6 +16,7 @@
 - [x] Benchmark scripts accept `--data-dir` flag for full TSPLIB path
 
 ### Structure
+
 ```text
 ripple-insertion/
 ├── src/
@@ -45,6 +47,7 @@ ripple-insertion/
 ```
 
 ### Init & Tooling
+
 - [x] `git init` + first commit
 - [x] `package.json` with name `ripple-insertion` and `"type": "module"` for native ES Modules
 - [x] `.gitignore`
@@ -58,6 +61,7 @@ ripple-insertion/
 Both visualizers have the algorithm embedded inline. Extract into reusable modules.
 
 ### Core Module: `src/ripple-insertion.js`
+
 - [x] Extract from `ripple-insertion-optimized.html` (v2.0, O(N log N))
 - [x] Export as ES module: `export class RippleInsertion`
 - [x] API surface:
@@ -73,15 +77,18 @@ Both visualizers have the algorithm embedded inline. Extract into reusable modul
 - [x] Add comprehensive **JSDoc** comments for autocompletion and type safety without needing TypeScript compilation.
 
 ### KD-Tree: `src/kd-tree.js`
+
 - [x] Extract `OptimizedKDTree` class
 - [x] Self-balancing with rebuild threshold
 - [x] k-NN queries with binary heap
 
 ### Doubly Linked Tour: `src/doubly-linked-tour.js`
+
 - [x] Extract `DoublyLinkedTour` class
 - [x] O(1) insert, remove, move, get neighbors
 
 ### Update HTML Demos
+
 - [x] Refactor demos to import from `src/` modules (via `demo/optimized.js`)
 - [x] Keep demos as thin UI wrappers
 
@@ -111,6 +118,7 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 ## Phase 4: Benchmarking (✅ Completed)
 
 ### Standalone Benchmark Runner
+
 - [x] `benchmark/benchmark.js`
   - [x] Accepts `--data-dir` for full TSPLIB instances
   - [x] Falls back to `data/` subset if no dir specified
@@ -119,6 +127,7 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 - [x] Record: cost, gap to optimal, time per insertion, ripple depth stats
 
 ### Improvements to Test
+
 - [x] Insert order: convex hull first (currently uses file order)
 - [ ] Adaptive M (neighbors) as function of N
 - [ ] Additional operators beyond Relocate (2-opt, or-opt)

@@ -127,9 +127,9 @@ async function runBenchmark() {
 
   // Save Markdown Report
   generateMarkdownReport(results, useOnion, 15); // Pass maxK to report
-  }
+}
 
-  function generateMarkdownReport(results, usedOnion, maxK) {
+function generateMarkdownReport(results, usedOnion, maxK) {
   const mdPath = path.join(process.cwd(), 'benchmark_report.md');
 
   let md = `# Ripple Insertion Benchmark Report\n\n`;

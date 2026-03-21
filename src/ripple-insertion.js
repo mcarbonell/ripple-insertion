@@ -298,7 +298,7 @@ export class RippleInsertion extends EventTarget {
       const neighborNode = this.tour.getNode(neighbor.id);
       if (neighborNode && !checkedNodes.has(neighborNode)) {
         checkedNodes.add(neighborNode);
-        
+
         // Check inserting AFTER the neighbor
         const costAfter = this.insertionCost(
           cityId,
