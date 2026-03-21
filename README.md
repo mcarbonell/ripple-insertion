@@ -1,6 +1,6 @@
 # Ripple Insertion: Dynamic TSP Solver
 
-[![Node.js CI](https://github.com/MarioRaul/ripple-insertion/actions/workflows/ci.yml/badge.svg)](https://github.com/MarioRaul/ripple-insertion/actions/workflows/ci.yml)
+[![Node.js CI](https://github.com/mcarbonell/ripple-insertion/actions/workflows/ci.yml/badge.svg)](https://github.com/mcarbonell/ripple-insertion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 **Ripple Insertion** (Recursive Cheapest Insertion) is an experimental algorithm designed for **Dynamic Traveling Salesperson Problem (TSP)** scenarios. Unlike traditional solvers that calculate a route from scratch, this algorithm specializes in integrating new points into an existing route in real-time, optimizing locally via a cascading "ripple" effect.
