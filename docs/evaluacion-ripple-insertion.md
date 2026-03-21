@@ -50,8 +50,8 @@ alrededor de clavos (ciudades):
 ```javascript
 // Encuentra el mejor borde para insertar la nueva ciudad
 for (let i = 0; i < tour.length; i++) {
-    const cost = insertionCost(newCity, tour[i], tour[i + 1]);
-    if (cost < bestCost) bestInsertion = i;
+  const cost = insertionCost(newCity, tour[i], tour[i + 1]);
+  if (cost < bestCost) bestInsertion = i;
 }
 ```
 
@@ -60,9 +60,9 @@ for (let i = 0; i < tour.length; i++) {
 ```javascript
 // Mantiene índice espacial para consultas rápidas de vecinos
 class KDTree {
-    nearestNeighbors(x, y, k) {
-        // Retorna los k vecinos más cercanos en O(log N)
-    }
+  nearestNeighbors(x, y, k) {
+    // Retorna los k vecinos más cercanos en O(log N)
+  }
 }
 ```
 
@@ -73,9 +73,9 @@ class KDTree {
 const activeSet = new Set([newCity, neighbor1, neighbor2]);
 
 while (activeSet.size > 0) {
-    const node = activeSet.pop();
-    // Evaluar movimiento usando solo vecinos espaciales
-    // Si mejora, mover y propagar a nuevos vecinos
+  const node = activeSet.pop();
+  // Evaluar movimiento usando solo vecinos espaciales
+  // Si mejora, mover y propagar a nuevos vecinos
 }
 ```
 

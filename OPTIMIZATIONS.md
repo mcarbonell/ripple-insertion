@@ -141,21 +141,21 @@ class DoublyLinkedTour {
 
 ```javascript
 class OptimizedKDTree {
-    REBUILD_THRESHOLD = 50; // Reconstruir cada 50 inserciones
+  REBUILD_THRESHOLD = 50; // Reconstruir cada 50 inserciones
 
-    insert(city) {
-        this.points.push(city);
-        this.insertionCount++;
+  insert(city) {
+    this.points.push(city);
+    this.insertionCount++;
 
-        if (shouldRebuild) {
-            this.rebuild(); // O(N log N) pero amortizado O(log N)
-        }
+    if (shouldRebuild) {
+      this.rebuild(); // O(N log N) pero amortizado O(log N)
     }
+  }
 
-    rebuild() {
-        // Construcción bottom-up balanceada
-        this.root = buildTree(points, 0);
-    }
+  rebuild() {
+    // Construcción bottom-up balanceada
+    this.root = buildTree(points, 0);
+  }
 }
 ```
 
@@ -182,15 +182,15 @@ neighbors.sort((a, b) => a.distance - b.distance);
 ```javascript
 // Ahora: Binary Heap con tamaño máximo - O(log k)
 class FastBinaryHeap {
-    push(item) {
-        if (heap.length < maxSize) {
-            heap.push(item);
-            bubbleUp();
-        } else if (item < heap[0]) {
-            heap[0] = item; // Reemplazar máximo
-            sinkDown();
-        }
+  push(item) {
+    if (heap.length < maxSize) {
+      heap.push(item);
+      bubbleUp();
+    } else if (item < heap[0]) {
+      heap[0] = item; // Reemplazar máximo
+      sinkDown();
     }
+  }
 }
 ```
 
@@ -235,7 +235,7 @@ class SetPool {
 ```javascript
 // Antes: Tour completo en el ripple - O(N)
 for (let i = 0; i < tour.length; i++) {
-    // Evaluar cada posición
+  // Evaluar cada posición
 }
 ```
 
@@ -245,7 +245,7 @@ for (let i = 0; i < tour.length; i++) {
 // Ahora: Solo vecinos espaciales - O(M) donde M es constante
 const spatialNeighbors = kdtree.nearestNeighbors(city.x, city.y, maxK);
 for (const neighbor of spatialNeighbors) {
-    // Solo evaluar M posiciones cercanas
+  // Solo evaluar M posiciones cercanas
 }
 ```
 
@@ -295,11 +295,11 @@ La versión optimizada incluye métricas en tiempo real:
 
 ```javascript
 performanceMetrics = {
-    insertions: number, // Total de inserciones
-    totalInsertionTime: number, // Tiempo acumulado
-    avgInsertionTime: number, // Tiempo promedio por inserción
-    totalRippleIterations: number, // Iteraciones totales
-    avgRippleDepth: number, // Profundidad promedio del ripple
+  insertions: number, // Total de inserciones
+  totalInsertionTime: number, // Tiempo acumulado
+  avgInsertionTime: number, // Tiempo promedio por inserción
+  totalRippleIterations: number, // Iteraciones totales
+  avgRippleDepth: number, // Profundidad promedio del ripple
 };
 ```
 
@@ -317,34 +317,34 @@ Para N > 5000, considerar:
 
 1. **Web Workers**
 
-    ```javascript
-    // Mover cálculos a worker thread
-    const worker = new Worker('tsp-worker.js');
-    worker.postMessage({ cities, tour });
-    ```
+   ```javascript
+   // Mover cálculos a worker thread
+   const worker = new Worker('tsp-worker.js');
+   worker.postMessage({ cities, tour });
+   ```
 
 2. **Spatial Hashing**
 
-    ```javascript
-    // Grid-based neighbor search para regiones densas
-    class SpatialHash {
-        cellSize: number;
-        grid: Map<string, City[]>;
-    }
-    ```
+   ```javascript
+   // Grid-based neighbor search para regiones densas
+   class SpatialHash {
+       cellSize: number;
+       grid: Map<string, City[]>;
+   }
+   ```
 
 3. **WebGL Rendering**
 
-    ```javascript
-    // Para N > 1000, usar WebGL en lugar de Canvas 2D
-    const gl = canvas.getContext('webgl');
-    ```
+   ```javascript
+   // Para N > 1000, usar WebGL en lugar de Canvas 2D
+   const gl = canvas.getContext('webgl');
+   ```
 
 4. **Typed Arrays**
-    ```javascript
-    // Para N > 10000
-    const coords = new Float64Array(N * 2);
-    ```
+   ```javascript
+   // Para N > 10000
+   const coords = new Float64Array(N * 2);
+   ```
 
 ---
 

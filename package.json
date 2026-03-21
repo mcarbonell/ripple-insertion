@@ -1,0 +1,22 @@
+{
+  "name": "ripple-insertion",
+  "version": "1.0.0",
+  "description": "O(N log N) Dynamic TSP algorithm - Ripple Insertion",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/**/*.spec.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "keywords": [
+    "tsp",
+    "dynamic-tsp",
+    "algorithm",
+    "optimization"
+  ],
+  "author": "Mario Raúl Carbonell Martínez",
+  "license": "MIT"
+}

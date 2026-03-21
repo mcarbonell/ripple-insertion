@@ -53,14 +53,14 @@ This is the recursive/iterative engine.
 - A `Set` (queue) tracks "Active Nodes" that need optimization.
 - Initially, the inserted node and its immediate neighbors are added.
 - **Loop:** While the set is not empty:
-    1.  Pop a node $C$.
-    2.  Use KD-Tree to find candidate positions (edges near $C$).
-    3.  Calculate the **Gain** of moving $C$ to a new position vs. keeping it.
-    4.  **If Gain > 0:**
-        - Move $C$.
-        - Add $C$'s _old_ neighbors to the queue (edge broken).
-        - Add $C$'s _new_ neighbors to the queue (edge created).
-        - (Optional) Add $C$ back to queue.
+  1.  Pop a node $C$.
+  2.  Use KD-Tree to find candidate positions (edges near $C$).
+  3.  Calculate the **Gain** of moving $C$ to a new position vs. keeping it.
+  4.  **If Gain > 0:**
+      - Move $C$.
+      - Add $C$'s _old_ neighbors to the queue (edge broken).
+      - Add $C$'s _new_ neighbors to the queue (edge created).
+      - (Optional) Add $C$ back to queue.
 
 ## 📝 Pseudo-Code
 
@@ -114,13 +114,13 @@ checked.
 - **Standard Local Search (2-Opt/Relocate):** Typically scans $O(N^2)$ moves to
   find an improvement.
 - **Ripple Insertion:**
-    - Insertion: $O(\log N)$ with KD-Tree acceleration
-    - Optimization Step: $O(M)$ (Checking $M$ neighbors is constant time
-      relative to $N$).
-    - Total Complexity: $O(N \log N + C \cdot M)$, where $C$ is the number of
-      cascade steps (ripples).
-    - In practice, $C$ is small for local adjustments. The cascade Steps are 0
-      the 70% of times, 1-5 20% of times, 5+ 10% of times.
+  - Insertion: $O(\log N)$ with KD-Tree acceleration
+  - Optimization Step: $O(M)$ (Checking $M$ neighbors is constant time
+    relative to $N$).
+  - Total Complexity: $O(N \log N + C \cdot M)$, where $C$ is the number of
+    cascade steps (ripples).
+  - In practice, $C$ is small for local adjustments. The cascade Steps are 0
+    the 70% of times, 1-5 20% of times, 5+ 10% of times.
 
 **Result:** An algorithm that scales almost linearly $O(N \log N)$ for building
 complete tours, making it capable of handling real-time interactions with

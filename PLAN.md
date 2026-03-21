@@ -8,6 +8,7 @@
 ## Phase 1: Standalone Repo Setup
 
 ### Data
+
 - [ ] Create `data/` with demo subset (6 instances):
   - `eil51.json`, `berlin52.json`, `st70.json`, `kroA100.json`, `ch130.json`, `ch150.json`
 - [ ] Update `fetch()` paths in HTML visualizers to use `data/`
@@ -15,6 +16,7 @@
 - [ ] Benchmark scripts accept `--data-dir` flag for full TSPLIB path
 
 ### Structure
+
 ```text
 ripple-insertion/
 ├── src/
@@ -44,6 +46,7 @@ ripple-insertion/
 ```
 
 ### Init & Tooling
+
 - [ ] `git init` + first commit
 - [ ] `package.json` with name `ripple-insertion` and `"type": "module"` for native ES Modules
 - [ ] `.gitignore`
@@ -57,6 +60,7 @@ ripple-insertion/
 Both visualizers have the algorithm embedded inline. Extract into reusable modules.
 
 ### Core Module: `src/ripple-insertion.js`
+
 - [ ] Extract from `ripple-insertion-optimized.html` (v2.0, O(N log N))
 - [ ] Export as ES module: `export class RippleInsertion`
 - [ ] API surface:
@@ -72,15 +76,18 @@ Both visualizers have the algorithm embedded inline. Extract into reusable modul
 - [ ] Add comprehensive **JSDoc** comments for autocompletion and type safety without needing TypeScript compilation.
 
 ### KD-Tree: `src/kd-tree.js`
+
 - [ ] Extract `OptimizedKDTree` class
 - [ ] Self-balancing with rebuild threshold
 - [ ] k-NN queries with binary heap
 
 ### Doubly Linked Tour: `src/doubly-linked-tour.js`
+
 - [ ] Extract `DoublyLinkedTour` class
 - [ ] O(1) insert, remove, move, get neighbors
 
 ### Update HTML Demos
+
 - [ ] Refactor demos to import from `src/` modules
 - [ ] Keep demos as thin UI wrappers
 
@@ -110,6 +117,7 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 ## Phase 4: Benchmarking
 
 ### Standalone Benchmark Runner
+
 - [ ] `benchmark/benchmark.js`
   - [ ] Accepts `--data-dir` for full TSPLIB instances
   - [ ] Falls back to `data/` subset if no dir specified
@@ -118,6 +126,7 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 - [ ] Record: cost, gap to optimal, time per insertion, ripple depth stats
 
 ### Improvements to Test
+
 - [ ] Insert order: convex hull first (currently uses file order)
 - [ ] Adaptive M (neighbors) as function of N
 - [ ] Additional operators beyond Relocate (2-opt, or-opt)
@@ -141,13 +150,17 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 ## Notes
 
 ### Why not copy tsplib-json/
+
 The full `tsplib-json/` directory has ~80 parsed TSPLIB instances (~2MB). Copying it into every repo that uses TSP data is wasteful. Instead:
+
 - Include a small `data/` subset for demos and quick tests
 - Accept external data paths for full benchmarks
 - Users can download from TSPLIB or generate with `convert-tsplib-to-json.js`
 
 ### Relationship to k-alternatives
+
 This algorithm was originally developed inside the k-alternatives repo as a "bonus" experiment. It has been extracted because:
+
 1. Different problem domain (dynamic vs static TSP)
 2. Different target audience (game devs, interactive apps vs researchers)
 3. Deserves its own identity, docs, and versioning
