@@ -59,8 +59,8 @@ const cost = solver.getCost(); // Returns total distance
 
 ## 📊 Benchmarks
 
-Performance on standard TSPLIB instances (EUC_2D).
-_Gap is compared against the known optimal static solution. The focus of this algorithm is speed per insertion, not finding the absolute static minimum._
+Performance on standard TSPLIB instances (EUC*2D).
+\_Gap is compared against the known optimal static solution. The focus of this algorithm is speed per insertion, not finding the absolute static minimum.*
 
 | Instance | N   | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
 | -------- | --- | ------- | -------- | ------- | --------- | ------------- |

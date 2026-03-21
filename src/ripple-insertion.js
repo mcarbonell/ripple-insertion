@@ -161,6 +161,20 @@ export function distGEO(n1, n2) {
 // ============================================
 
 /**
+ * CustomEvent polyfill for Node.js environments (like Node 18.x) where
+ * EventTarget is available but CustomEvent is not exposed globally.
+ */
+class CustomEventFallback extends Event {
+  constructor(type, eventInitDict = {}) {
+    super(type, eventInitDict);
+    this.detail = eventInitDict.detail;
+  }
+}
+
+const SafeCustomEvent =
+  typeof CustomEvent !== 'undefined' ? CustomEvent : CustomEventFallback;
+
+/**
  * EventTarget is available natively in Node.js (>=16) and Browsers
  */
 export class RippleInsertion extends EventTarget {
@@ -259,7 +273,9 @@ export class RippleInsertion extends EventTarget {
           nodes[0].prev = nodes[2];
         }
       }
-      this.dispatchEvent(new CustomEvent('tourUpdated', { detail: { id } }));
+      this.dispatchEvent(
+        new SafeCustomEvent('tourUpdated', { detail: { id } })
+      );
       return { iterations: 0, maxDepth: 0 };
     } else {
       return this._insertAndOptimize(id);
@@ -313,7 +329,7 @@ export class RippleInsertion extends EventTarget {
 
     // Insert the city
     this.tour.insertAfter(bestInsertion.afterNode, cityId);
-    this.dispatchEvent(new CustomEvent('inserted', { detail: { cityId } }));
+    this.dispatchEvent(new SafeCustomEvent('inserted', { detail: { cityId } }));
 
     // 2. Cascade Optimization
     const startNodes = this.setPool.acquire();
@@ -334,7 +350,7 @@ export class RippleInsertion extends EventTarget {
     this.setPool.release(startNodes);
 
     this.dispatchEvent(
-      new CustomEvent('tourUpdated', { detail: { id: cityId } })
+      new SafeCustomEvent('tourUpdated', { detail: { id: cityId } })
     );
     return rippleStats;
   }
@@ -360,7 +376,7 @@ export class RippleInsertion extends EventTarget {
       }
 
       this.dispatchEvent(
-        new CustomEvent('rippleStep', {
+        new SafeCustomEvent('rippleStep', {
           detail: { currentCityId, modified: new Set(modified) },
         })
       );
