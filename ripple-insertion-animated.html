@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TSP - Depuración KD-Tree y Ripple Insertion</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            canvas {
+                border: 1px solid black;
+                cursor: crosshair;
+                margin-top: 10px;
+            }
+
+            .controls {
+                margin: 10px;
+                padding: 15px;
+                background: #f0f0f0;
+                border-radius: 8px;
+                text-align: left;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                margin-right: 5px;
+            }
+
+            .stats {
+                margin-top: 10px;
+                font-family: monospace;
+                font-size: 16px;
+                background: #333;
+                color: #fff;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+
+            .legend {
+                font-size: 12px;
+                color: #666;
+                margin-top: 5px;
+            }
+
+            label {
+                margin-right: 10px;
+                display: inline-block;
+                margin-bottom: 5px;
+            }
+
+            .mode-group {
+                margin-bottom: 10px;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 10px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>TSP - Ripple Insertion v0.1.1</h1>
+
+        <div class="controls">
+            <div class="mode-group">
+                <strong>Modo:</strong>
+                <label
+                    ><input type="radio" name="mode" value="insert" checked /> Insertar &
+                    Optimizar</label
+                >
+                <label
+                    ><input type="radio" name="mode" value="inspect" /> Inspeccionar Vecinos
+                    (KD-Tree)</label
+                >
+            </div>
+
+            <div class="mode-group">
+                <strong>TSPLIB:</strong>
+                <select id="tsplibSelect">
+                    <option value="">-- Seleccionar instancia --</option>
+                    <option value="eil51.json">eil51 (n=51, opt=426)</option>
+                    <option value="berlin52.json">berlin52 (n=52, opt=7542)</option>
+                    <option value="st70.json">st70 (n=70, opt=675)</option>
+                    <option value="kroA100.json">kroA100 (n=100, opt=21282)</option>
+                    <option value="ch130.json">ch130 (n=130, opt=6110)</option>
+                    <option value="ch150.json">ch150 (n=150, opt=6528)</option>
+                    <option value="d657.json">d657 (n=657, opt=48912)</option>
+                </select>
+                <button onclick="loadTSPLIB()">Cargar TSPLIB</button>
+            </div>
+
+            <button onclick="generateRandom(30)">Generar 30 Aleatorios</button>
+            <button onclick="clearCanvas()">Limpiar</button>
+            <br />
+            <label
+                >Vecinos (M): <input type="number" id="kNeighbors" value="10" min="3" max="100"
+            /></label>
+            <label
+                >Velocidad (ms): <input type="number" id="delay" value="100" min="0" max="1000"
+            /></label>
+            <label>Auto-Play: <input type="checkbox" id="autoplay" checked /></label>
+        </div>
+
+        <canvas id="tspCanvas" width="800" height="500"></canvas>
+        <div class="stats" id="stats">Nodos: 0 | Costo: 0.00 | Estado: Listo</div>
+        <div class="stats" id="comparisonStats" style="background: #2c5aa0"></div>
+        <div class="legend">
+            🔴 Nodo Estático | 🟢 Último Insertado | 🟡 En Cola (ActiveSet) | 🔵 Líneas de
+            Inspección
+        </div>
+
+        <script>
+            // --- KD-Tree Implementation ---
+            class Node {
+                constructor(point, axis, data) {
+                    this.point = point;
+                    this.left = null;
+                    this.right = null;
+                    this.axis = axis;
+                    this.data = data;
+                }
+            }
+
+            class KDTree {
+                constructor(points) {
+                    const formatted = points.map((p) => ({ arr: [p.x, p.y], data: p }));
+                    this.root = this.buildTree(formatted, 0);
+                }
+
+                buildTree(points, depth) {
+                    if (points.length === 0) return null;
+                    const axis = depth % 2;
+                    points.sort((a, b) => a.arr[axis] - b.arr[axis]);
+                    const medianIndex = Math.floor(points.length / 2);
+                    const node = new Node(points[medianIndex].arr, axis, points[medianIndex].data);
+                    node.left = this.buildTree(points.slice(0, medianIndex), depth + 1);
+                    node.right = this.buildTree(points.slice(medianIndex + 1), depth + 1);
+                    return node;
+                }
+
+                insert(city) {
+                    const point = [city.x, city.y];
+                    if (!this.root) this.root = new Node(point, 0, city);
+                    else this._insertRecursive(this.root, point, city, 0);
+                }
+
+                _insertRecursive(node, point, data, depth) {
+                    const axis = depth % 2;
+                    if (point[axis] < node.point[axis]) {
+                        if (node.left === null) node.left = new Node(point, (depth + 1) % 2, data);
+                        else this._insertRecursive(node.left, point, data, depth + 1);
+                    } else {
+                        if (node.right === null)
+                            node.right = new Node(point, (depth + 1) % 2, data);
+                        else this._insertRecursive(node.right, point, data, depth + 1);
+                    }
+                }
+
+                nearestNeighbors(x, y, k) {
+                    const point = [x, y];
+                    const neighbors = [];
+                    this.searchNearest(this.root, point, k, neighbors);
+                    return neighbors.map((n) => n.node.data);
+                }
+
+                searchNearest(node, point, k, neighbors) {
+                    if (!node) return;
+                    const d = Math.hypot(point[0] - node.point[0], point[1] - node.point[1]);
+
+                    // Add to list if space or closer than worst
+                    let added = false;
+                    if (neighbors.length < k) {
+                        neighbors.push({ node, distance: d });
+                        added = true;
+                    } else if (d < neighbors[neighbors.length - 1].distance) {
+                        neighbors.pop();
+                        neighbors.push({ node, distance: d });
+                        added = true;
+                    }
+
+                    if (added) {
+                        neighbors.sort((a, b) => a.distance - b.distance);
+                    }
+
+                    const axis = node.axis;
+                    const diff = point[axis] - node.point[axis];
+                    const nearChild = diff < 0 ? node.left : node.right;
+                    const farChild = diff < 0 ? node.right : node.left;
+
+                    this.searchNearest(nearChild, point, k, neighbors);
+
+                    if (
+                        neighbors.length < k ||
+                        Math.abs(diff) < neighbors[neighbors.length - 1].distance
+                    ) {
+                        this.searchNearest(farChild, point, k, neighbors);
+                    }
+                }
+            }
+
+            // --- Main Logic ---
+            const canvas = document.getElementById('tspCanvas');
+            const ctx = canvas.getContext('2d');
+            const statsDiv = document.getElementById('stats');
+            const comparisonStatsDiv = document.getElementById('comparisonStats');
+
+            let cities = [];
+            let originalCities = [];
+            let tour = [];
+            let kdtree = new KDTree([]);
+            let isOptimizing = false;
+            let optimalValue = null;
+            let problemName = '';
+            let edgeWeightType = 'EUC_2D'; // 'EUC_2D', 'GEO', 'ATT', 'CEIL_2D', 'EXPLICIT'
+            let explicitWeights = null; // For EXPLICIT edge weight type
+
+            // Visual State
+            let activeSet = new Set();
+            let lastInsertedId = -1;
+            let inspectNeighbors = [];
+            let inspectPoint = null;
+
+            function clearCanvas() {
+                cities = [];
+                originalCities = [];
+                tour = [];
+                kdtree = new KDTree([]);
+                activeSet.clear();
+                inspectNeighbors = [];
+                inspectPoint = null;
+                optimalValue = null;
+                problemName = '';
+                edgeWeightType = 'EUC_2D';
+                explicitWeights = null;
+                updateComparisonStats();
+                drawState();
+            }
+
+            async function loadTSPLIB() {
+                if (isOptimizing) return;
+                const select = document.getElementById('tsplibSelect');
+                const filename = select.value;
+                if (!filename) {
+                    alert('Por favor, selecciona una instancia TSPLIB');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`data/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    // Clear current state
+                    clearCanvas();
+
+                    // Store problem info
+                    problemName = data.metadata.name;
+                    optimalValue = data.metadata.optimalDistance;
+                    edgeWeightType = data.metadata.edgeWeightType || 'EUC_2D';
+
+                    // Handle EXPLICIT edge weights
+                    if (edgeWeightType === 'EXPLICIT' && data.edgeWeights) {
+                        explicitWeights = data.edgeWeights;
+                    } else {
+                        explicitWeights = null;
+                    }
+
+                    // Normalize coordinates to fit canvas
+                    const citiesData = data.cities;
+                    const xs = citiesData.map((c) => c.x);
+                    const ys = citiesData.map((c) => c.y);
+                    const minX = Math.min(...xs);
+                    const maxX = Math.max(...xs);
+                    const minY = Math.min(...ys);
+                    const maxY = Math.max(...ys);
+
+                    const padding = 50;
+                    const scaleX = (canvas.width - 2 * padding) / (maxX - minX || 1);
+                    const scaleY = (canvas.height - 2 * padding) / (maxY - minY || 1);
+                    const scale = Math.min(scaleX, scaleY);
+
+                    const offsetX = (canvas.width - (maxX - minX) * scale) / 2 - minX * scale;
+                    const offsetY = (canvas.height - (maxY - minY) * scale) / 2 - minY * scale;
+
+                    // Add cities with normalized coordinates
+                    // Invert Y axis to match standard Cartesian coordinates (Y increases upward)
+                    const autoplay = document.getElementById('autoplay').checked;
+                    for (let i = 0; i < citiesData.length; i++) {
+                        const city = citiesData[i];
+                        const originalX = city.x;
+                        const originalY = city.y;
+                        const x = originalX * scale + offsetX;
+                        const y = canvas.height - (originalY * scale + offsetY);
+                        await addCityInternal(
+                            x,
+                            y,
+                            autoplay && i > citiesData.length - 5,
+                            originalX,
+                            originalY
+                        );
+                    }
+
+                    updateComparisonStats();
+                    drawState();
+                } catch (error) {
+                    console.error('Error loading TSPLIB instance:', error);
+                    alert(`Error cargando instancia: ${error.message}`);
+                }
+            }
+
+            async function generateRandom(n) {
+                if (isOptimizing) return;
+                clearCanvas();
+                const autoplay = document.getElementById('autoplay').checked;
+                for (let i = 0; i < n; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    // Only animate the last few to save time if n is large
+                    await addCityInternal(x, y, autoplay && i > n - 5);
+                }
+                drawState();
+            }
+
+            canvas.addEventListener('click', async (event) => {
+                const mode = document.querySelector('input[name="mode"]:checked').value;
+                if (mode === 'insert') {
+                    if (isOptimizing) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    await addCityInternal(x, y, true);
+                }
+            });
+
+            canvas.addEventListener('mousemove', (event) => {
+                const mode = document.querySelector('input[name="mode"]:checked').value;
+                if (mode === 'inspect') {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    const k = parseInt(document.getElementById('kNeighbors').value);
+
+                    inspectPoint = { x, y };
+                    inspectNeighbors = kdtree.nearestNeighbors(x, y, k);
+                    drawState();
+                }
+            });
+
+            async function addCityInternal(x, y, animate, originalX = null, originalY = null) {
+                const newCity = { x, y, id: cities.length };
+                cities.push(newCity);
+                // Store original coordinates for accurate distance calculation
+                originalCities.push({
+                    x: originalX !== null ? originalX : x,
+                    y: originalY !== null ? originalY : y,
+                    id: newCity.id,
+                });
+                kdtree.insert(newCity);
+                lastInsertedId = newCity.id;
+
+                if (cities.length <= 3) {
+                    tour.push(newCity.id);
+                    drawState();
+                } else {
+                    await insertCityAndOptimize(newCity.id, animate);
+                }
+            }
+
+            async function insertCityAndOptimize(cityIndex, animate) {
+                isOptimizing = true;
+                let bestInsertion = { cost: Infinity, idx: -1 };
+
+                // 1. KD-Tree Accelerated Insertion (O(log N) instead of O(N))
+                // Query nearest spatial neighbors to find candidate insertion points
+                const maxK = parseInt(document.getElementById('kNeighbors').value);
+                const nearestNeighbors = kdtree.nearestNeighbors(
+                    cities[cityIndex].x,
+                    cities[cityIndex].y,
+                    maxK
+                );
+
+                // Check insertion points near spatial neighbors (much fewer than full tour)
+                const candidatePositions = new Set();
+                nearestNeighbors.forEach((neighbor) => {
+                    const neighborPos = tour.indexOf(neighbor.id);
+                    if (neighborPos !== -1) {
+                        candidatePositions.add(neighborPos);
+                        candidatePositions.add((neighborPos + 1) % tour.length);
+                    }
+                });
+
+                // If tour is small or no neighbors found, fall back to full scan
+                if (candidatePositions.size === 0 || tour.length < maxK * 2) {
+                    for (let i = 0; i < tour.length; i++) {
+                        const j = (i + 1) % tour.length;
+                        const cost = insertionCost(cityIndex, tour[i], tour[j]);
+                        if (cost < bestInsertion.cost) {
+                            bestInsertion = { cost, idx: i };
+                        }
+                    }
+                } else {
+                    // Only check positions near spatial neighbors
+                    candidatePositions.forEach((i) => {
+                        const j = (i + 1) % tour.length;
+                        const cost = insertionCost(cityIndex, tour[i], tour[j]);
+                        if (cost < bestInsertion.cost) {
+                            bestInsertion = { cost, idx: i };
+                        }
+                    });
+                }
+                tour.splice(bestInsertion.idx + 1, 0, cityIndex);
+
+                if (animate) {
+                    updateStats('Insertando...');
+                    drawState();
+                    await sleep(50);
+                }
+
+                // 2. Cascade Optimization
+                // Start optimizing the new city AND its immediate neighbors (because their edges changed)
+                const prevIdx = bestInsertion.idx;
+                const nextIdx = (bestInsertion.idx + 2) % tour.length; // +2 because tour grew by 1
+                const startNodes = [cityIndex, tour[prevIdx], tour[nextIdx]];
+                const neighborIds = kdtree
+                    .nearestNeighbors(cities[cityIndex].x, cities[cityIndex].y, maxK)
+                    .map((n) => n.id);
+                console.log('Optimizing with neighbors:', neighborIds);
+
+                await optimizeNeighbors(startNodes.concat(neighborIds), animate, maxK);
+
+                isOptimizing = false;
+                lastInsertedId = -1;
+                activeSet.clear();
+                updateStats('Listo');
+                drawState();
+            }
+
+            async function optimizeNeighbors(startNodeIds, animate, maxK) {
+                let modified = new Set(startNodeIds);
+                activeSet = modified;
+
+                const delay = parseInt(document.getElementById('delay').value);
+
+                let iterations = 0;
+                const MAX_ITER = cities.length * 10; // Increased safety limit
+
+                while (modified.size > 0 && iterations < MAX_ITER) {
+                    iterations++;
+                    // Peek only, don't delete yet so it draws as yellow
+                    const currentCityId = modified.values().next().value;
+
+                    const currentPos = tour.indexOf(currentCityId);
+                    if (currentPos === -1) {
+                        modified.delete(currentCityId);
+                        continue;
+                    }
+
+                    // Highlight currently processing node
+                    if (animate) {
+                        updateStats(`Evaluando nodo ${currentCityId}...`);
+                        drawState();
+                        await sleep(Math.max(20, delay / 2));
+                    }
+
+                    // Now we can remove it from the working set for logic,
+                    // but ideally we keep it in 'activeSet' for viz...
+                    // Ideally 'activeSet' should be separate from 'modified', but for simplicity:
+                    // We will delete it at the END of the loop iteration.
+
+                    // --- Logic ---
+                    const neighbors = kdtree.nearestNeighbors(
+                        cities[currentCityId].x,
+                        cities[currentCityId].y,
+                        maxK
+                    );
+
+                    const prevPos = (currentPos - 1 + tour.length) % tour.length;
+                    const nextPos = (currentPos + 1) % tour.length;
+                    const prevCityId = tour[prevPos];
+                    const nextCityId = tour[nextPos];
+
+                    const currentCostContribution =
+                        dist(cities[prevCityId], cities[currentCityId]) +
+                        dist(cities[currentCityId], cities[nextCityId]);
+
+                    const bridgedCost = dist(cities[prevCityId], cities[nextCityId]);
+                    const savingByRemoval = currentCostContribution - bridgedCost;
+
+                    let bestMove = { gain: 0, pos: -1 };
+
+                    const candidatePositions = new Set();
+                    neighbors.forEach((neighbor) => {
+                        const neighborPos = tour.indexOf(neighbor.id);
+                        if (neighborPos !== -1) {
+                            candidatePositions.add(neighborPos);
+                            candidatePositions.add((neighborPos + 1) % tour.length);
+                        }
+                    });
+
+                    candidatePositions.forEach((pos) => {
+                        if (pos === currentPos || pos === (currentPos + 1) % tour.length) return;
+
+                        const p = (pos - 1 + tour.length) % tour.length;
+                        const nodeP = tour[p];
+                        const nodeN = tour[pos]; // index pos is the node AFTER insertion point
+
+                        // Fix logic: insert AT index 'pos' means between tour[pos-1] and tour[pos]
+                        // So nodes are tour[p] and tour[pos]
+                        // Avoid inserting next to self (already filtered by pos checks but be safe)
+                        if (nodeP === currentCityId || nodeN === currentCityId) return;
+
+                        const costToInsert =
+                            dist(cities[nodeP], cities[currentCityId]) +
+                            dist(cities[currentCityId], cities[nodeN]) -
+                            dist(cities[nodeP], cities[nodeN]);
+
+                        const gain = savingByRemoval - costToInsert;
+
+                        // Using a small epsilon preference for stability
+                        if (gain > 0.000001 && gain > bestMove.gain) {
+                            bestMove = { gain, pos: pos, nodeP, nodeN };
+                        }
+                    });
+
+                    if (bestMove.gain > 0) {
+                        // Apply Move
+                        tour.splice(currentPos, 1);
+                        let newIdxP = tour.indexOf(bestMove.nodeP);
+                        tour.splice(newIdxP + 1, 0, currentCityId);
+
+                        // Propagate:
+                        // 1. Neighbors of OLD position (now connected to each other)
+                        modified.add(prevCityId);
+                        modified.add(nextCityId);
+                        // 2. Neighbors of NEW position (now separated)
+                        modified.add(bestMove.nodeP);
+                        modified.add(bestMove.nodeN);
+
+                        // 3. The node itself moved, maybe it wants to move again?
+                        modified.add(currentCityId);
+
+                        if (animate) {
+                            updateStats(
+                                `Moviendo nodo ${currentCityId} (Gain: ${bestMove.gain.toFixed(1)})`
+                            );
+                            drawState();
+                            await sleep(delay);
+                        }
+                    }
+
+                    // Remove processed node from set
+                    modified.delete(currentCityId);
+                }
+            }
+
+            function insertionCost(cityIdx, prevIdx, nextIdx) {
+                return (
+                    dist(cities[cityIdx], cities[prevIdx]) +
+                    dist(cities[cityIdx], cities[nextIdx]) -
+                    dist(cities[prevIdx], cities[nextIdx])
+                );
+            }
+
+            // Store original coordinates for distance calculation
+            // Already declared at the top of the script
+
+            // TSPLIB distance calculation functions
+            function nint(x) {
+                return Math.floor(x + 0.5);
+            }
+
+            function toRad(coordinate) {
+                // TSPLIB GEO format: DDD.MM (degrees + minutes)
+                // Convert to radians using TSPLIB formula
+                const PI = 3.141592;
+                const deg = Math.floor(coordinate);
+                const min = coordinate - deg;
+                return (PI * (deg + (5.0 * min) / 3.0)) / 180.0;
+            }
+
+            function distEUC2D(n1, n2) {
+                const xd = n1.x - n2.x;
+                const yd = n1.y - n2.y;
+                return nint(Math.sqrt(xd * xd + yd * yd));
+            }
+
+            function distCEIL2D(n1, n2) {
+                const xd = n1.x - n2.x;
+                const yd = n1.y - n2.y;
+                return Math.ceil(Math.sqrt(xd * xd + yd * yd));
+            }
+
+            function distATT(n1, n2) {
+                const xd = n1.x - n2.x;
+                const yd = n1.y - n2.y;
+                const rij = Math.sqrt((xd * xd + yd * yd) / 10.0);
+                const tij = nint(rij);
+                // Special rounding rule for ATT
+                if (tij < rij) {
+                    return tij + 1;
+                } else {
+                    return tij;
+                }
+            }
+
+            function distGEO(n1, n2) {
+                const RRR = 6378.388;
+                // In TSPLIB GEO, x is latitude, y is longitude
+                const lat1 = toRad(n1.x);
+                const lon1 = toRad(n1.y);
+                const lat2 = toRad(n2.x);
+                const lon2 = toRad(n2.y);
+
+                const q1 = Math.cos(lon1 - lon2);
+                const q2 = Math.cos(lat1 - lat2);
+                const q3 = Math.cos(lat1 + lat2);
+
+                const dij = Math.floor(
+                    RRR * Math.acos(0.5 * ((1.0 + q1) * q2 - (1.0 - q1) * q3)) + 1.0
+                );
+                return dij;
+            }
+
+            function dist(a, b) {
+                // Use original coordinates for accurate distance calculation
+                const origA = originalCities[a.id];
+                const origB = originalCities[b.id];
+                if (!origA || !origB) {
+                    // Fallback for cities without original coordinates (random generation)
+                    return Math.hypot(a.x - b.x, a.y - b.y);
+                }
+
+                switch (edgeWeightType) {
+                    case 'GEO':
+                        return distGEO(origA, origB);
+                    case 'ATT':
+                        return distATT(origA, origB);
+                    case 'CEIL_2D':
+                        return distCEIL2D(origA, origB);
+                    case 'EXPLICIT':
+                        // Use pre-computed distance matrix
+                        if (
+                            explicitWeights &&
+                            explicitWeights[a.id] &&
+                            explicitWeights[a.id][b.id] !== undefined
+                        ) {
+                            return explicitWeights[a.id][b.id];
+                        }
+                        // Fallback to EUC_2D if matrix not available
+                        return distEUC2D(origA, origB);
+                    case 'EUC_2D':
+                    default:
+                        return distEUC2D(origA, origB);
+                }
+            }
+
+            function tourCost() {
+                let c = 0;
+                for (let i = 0; i < tour.length; i++) {
+                    c += dist(cities[tour[i]], cities[tour[(i + 1) % tour.length]]);
+                }
+                return c;
+            }
+            function sleep(ms) {
+                return new Promise((resolve) => setTimeout(resolve, ms));
+            }
+
+            function updateStats(state) {
+                statsDiv.textContent = `Nodos: ${cities.length} | Costo: ${tourCost().toFixed(2)} | Estado: ${state}`;
+                updateComparisonStats();
+            }
+
+            function updateComparisonStats() {
+                if (!comparisonStatsDiv) return;
+
+                if (optimalValue && cities.length > 0) {
+                    const currentCost = tourCost();
+                    const deviation = (((currentCost - optimalValue) / optimalValue) * 100).toFixed(
+                        2
+                    );
+                    const ratio = (currentCost / optimalValue).toFixed(4);
+                    comparisonStatsDiv.textContent =
+                        `📊 ${problemName} | Óptimo: ${optimalValue.toFixed(2)} | ` +
+                        `Actual: ${currentCost.toFixed(2)} | ` +
+                        `Desviación: ${deviation}% | Ratio: ${ratio}`;
+                } else {
+                    comparisonStatsDiv.textContent = '';
+                }
+            }
+
+            function drawState() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw Tour
+                if (tour.length > 0) {
+                    ctx.beginPath();
+                    const start = cities[tour[0]];
+                    ctx.moveTo(start.x, start.y);
+                    for (let i = 1; i <= tour.length; i++) {
+                        const city = cities[tour[i % tour.length]];
+                        ctx.lineTo(city.x, city.y);
+                    }
+                    ctx.strokeStyle = '#007bff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                // Inspect Mode: Lines to neighbors
+                if (
+                    document.querySelector('input[name="mode"]:checked').value === 'inspect' &&
+                    inspectPoint
+                ) {
+                    ctx.strokeStyle = 'rgba(0, 0, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    inspectNeighbors.forEach((n) => {
+                        ctx.beginPath();
+                        ctx.moveTo(inspectPoint.x, inspectPoint.y);
+                        ctx.lineTo(n.x, n.y);
+                        ctx.stroke();
+                    });
+                    // Draw cursor point
+                    ctx.beginPath();
+                    ctx.arc(inspectPoint.x, inspectPoint.y, 3, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'blue';
+                    ctx.fill();
+                }
+
+                // Draw Cities
+                for (let i = 0; i < cities.length; i++) {
+                    const city = cities[i];
+                    ctx.beginPath();
+                    ctx.arc(city.x, city.y, 5, 0, 2 * Math.PI);
+
+                    if (city.id === lastInsertedId)
+                        ctx.fillStyle = '#28a745'; // Green
+                    else if (activeSet.has(city.id))
+                        ctx.fillStyle = '#ffc107'; // Yellow
+                    else ctx.fillStyle = '#dc3545'; // Red
+
+                    ctx.fill();
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Debug text
+                    // ctx.fillStyle = 'black';
+                    // ctx.fillText(city.id, city.x + 8, city.y);
+                }
+            }
+        </script>
+    </body>
+</html>

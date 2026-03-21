@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TSP - Ripple Insertion Optimized (O(N log N))</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            canvas {
+                border: 1px solid black;
+                cursor: crosshair;
+                margin-top: 10px;
+            }
+
+            .controls {
+                margin: 10px;
+                padding: 15px;
+                background: #f0f0f0;
+                border-radius: 8px;
+                text-align: left;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                margin-right: 5px;
+            }
+
+            .stats {
+                margin-top: 10px;
+                font-family: monospace;
+                font-size: 16px;
+                background: #333;
+                color: #fff;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+
+            .legend {
+                font-size: 12px;
+                color: #666;
+                margin-top: 5px;
+            }
+
+            label {
+                margin-right: 10px;
+                display: inline-block;
+                margin-bottom: 5px;
+            }
+
+            .mode-group {
+                margin-bottom: 10px;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 10px;
+            }
+
+            .performance-stats {
+                margin-top: 5px;
+                font-family: monospace;
+                font-size: 14px;
+                background: #2c5aa0;
+                color: #fff;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>TSP - Ripple Insertion v2.0 (O(N log N) Optimized)</h1>
+
+        <div class="controls">
+            <div class="mode-group">
+                <strong>Modo:</strong>
+                <label
+                    ><input type="radio" name="mode" value="insert" checked /> Insertar &
+                    Optimizar</label
+                >
+                <label
+                    ><input type="radio" name="mode" value="inspect" /> Inspeccionar Vecinos
+                    (KD-Tree)</label
+                >
+                <label
+                    ><input type="radio" name="mode" value="onion" /> Visualizar Capas
+                    (Onion)</label
+                >
+            </div>
+
+            <div class="mode-group">
+                <strong>Construcción:</strong>
+                <label
+                    ><input type="checkbox" id="useOnionPeeling" checked /> Usar Onion Peeling
+                    (mejor orden)</label
+                >
+                <span style="font-size: 11px; color: #666">Desde exterior → interior</span>
+            </div>
+
+            <div class="mode-group">
+                <strong>TSPLIB:</strong>
+                <select id="tsplibSelect">
+                    <option value="">-- Seleccionar instancia --</option>
+                    <option value="eil51.json">eil51 (n=51, opt=426)</option>
+                    <option value="berlin52.json">berlin52 (n=52, opt=7542)</option>
+                    <option value="st70.json">st70 (n=70, opt=675)</option>
+                    <option value="kroA100.json">kroA100 (n=100, opt=21282)</option>
+                    <option value="ch130.json">ch130 (n=130, opt=6110)</option>
+                    <option value="ch150.json">ch150 (n=150, opt=6528)</option>
+                    <option value="d657.json">d657 (n=657, opt=48912)</option>
+                    <option value="u724.json">u724 (n=724)</option>
+                    <option value="rat783.json">rat783 (n=783)</option>
+                    <option value="pr1002.json">pr1002 (n=1002)</option>
+                    <option value="u1060.json">u1060 (n=1060)</option>
+                    <option value="vm1084.json">vm1084 (n=1084)</option>
+                    <option value="pcb1173.json">pcb1173 (n=1173)</option>
+                    <option value="d1291.json">d1291 (n=1291)</option>
+                    <option value="rl1304.json">rl1304 (n=1304)</option>
+                    <option value="rl1323.json">rl1323 (n=1323)</option>
+                    <option value="nrw1379.json">nrw1379 (n=1379)</option>
+                    <option value="u1432.json">u1432 (n=1432)</option>
+                    <option value="pr2392.json">pr2392 (n=2392)</option>
+                    <option value="pcb3038.json">pcb3038 (n=3038)</option>
+                </select>
+                <button onclick="loadTSPLIB()">Cargar TSPLIB</button>
+            </div>
+
+            <button onclick="generateRandom(30)">Generar 30 Aleatorios</button>
+            <button onclick="generateRandom(100)">Generar 100 Aleatorios</button>
+            <button onclick="generateRandom(500)">Generar 500 Aleatorios</button>
+            <button onclick="generateRandom(1000)">Generar 1000 Aleatorios</button>
+            <button onclick="clearCanvas()">Limpiar</button>
+            <br />
+            <label
+                >Vecinos (M): <input type="number" id="kNeighbors" value="15" min="3" max="100"
+            /></label>
+            <label
+                >Velocidad (ms): <input type="number" id="delay" value="50" min="0" max="1000"
+            /></label>
+            <label>Animar: <input type="checkbox" id="autoplay" checked /></label>
+            <label>Modo Rápido (sin anim): <input type="checkbox" id="fastMode" /></label>
+        </div>
+
+        <canvas id="tspCanvas" width="900" height="600"></canvas>
+        <div class="stats" id="stats">Nodos: 0 | Costo: 0.00 | Tiempo: 0ms | Estado: Listo</div>
+        <div class="stats" id="comparisonStats" style="background: #2c5aa0"></div>
+        <div class="performance-stats" id="perfStats"></div>
+        <div class="legend">
+            🔴 Nodo Estático | 🟢 Último Insertado | 🟡 En Cola (ActiveSet) | 🔵 Líneas de
+            Inspección | 🧅 Capas Onion (Colores)
+        </div>
+
+        <script>
+            // ============================================
+            // OPTIMIZED KD-TREE WITH AUTO-BALANCING
+            // ============================================
+
+            class KDTreeNode {
+                constructor(point, axis, data) {
+                    this.point = point;
+                    this.left = null;
+                    this.right = null;
+                    this.axis = axis;
+                    this.data = data;
+                }
+            }
+
+            class OptimizedKDTree {
+                constructor() {
+                    this.root = null;
+                    this.points = []; // Batch insertions for bulk rebuild
+                    this.insertionCount = 0;
+                    this.lastRebuildSize = 0;
+                    this.REBUILD_THRESHOLD = 50; // Rebuild after this many insertions
+                }
+
+                insert(city) {
+                    this.points.push({ arr: [city.x, city.y], data: city });
+                    this.insertionCount++;
+
+                    // Rebuild if threshold reached or tree too unbalanced
+                    const shouldRebuild =
+                        this.insertionCount >= this.REBUILD_THRESHOLD ||
+                        (this.root && this.insertionCount > Math.sqrt(this.points.length) * 2);
+
+                    if (shouldRebuild) {
+                        this.rebuild();
+                    } else if (!this.root) {
+                        // First insertion
+                        this.root = new KDTreeNode([city.x, city.y], 0, city);
+                    } else {
+                        // Incremental insertion
+                        this._insertIncremental(this.root, [city.x, city.y], city, 0);
+                    }
+                }
+
+                _insertIncremental(node, point, data, depth) {
+                    const axis = depth % 2;
+                    if (point[axis] < node.point[axis]) {
+                        if (node.left === null) {
+                            node.left = new KDTreeNode(point, (depth + 1) % 2, data);
+                        } else {
+                            this._insertIncremental(node.left, point, data, depth + 1);
+                        }
+                    } else {
+                        if (node.right === null) {
+                            node.right = new KDTreeNode(point, (depth + 1) % 2, data);
+                        } else {
+                            this._insertIncremental(node.right, point, data, depth + 1);
+                        }
+                    }
+                }
+
+                rebuild() {
+                    if (this.points.length === 0) return;
+                    this.root = this._buildTree([...this.points], 0);
+                    this.insertionCount = 0;
+                    this.lastRebuildSize = this.points.length;
+                }
+
+                _buildTree(points, depth) {
+                    if (points.length === 0) return null;
+                    const axis = depth % 2;
+                    points.sort((a, b) => a.arr[axis] - b.arr[axis]);
+                    const medianIndex = Math.floor(points.length / 2);
+                    const node = new KDTreeNode(
+                        points[medianIndex].arr,
+                        axis,
+                        points[medianIndex].data
+                    );
+                    node.left = this._buildTree(points.slice(0, medianIndex), depth + 1);
+                    node.right = this._buildTree(points.slice(medianIndex + 1), depth + 1);
+                    return node;
+                }
+
+                nearestNeighbors(x, y, k) {
+                    if (!this.root) return [];
+                    const point = [x, y];
+                    const neighbors = new FastBinaryHeap((a, b) => a.distance - b.distance, k);
+                    this._searchNearest(this.root, point, k, neighbors);
+                    return neighbors.toArray().map((n) => n.node.data);
+                }
+
+                _searchNearest(node, point, k, neighbors) {
+                    if (!node) return;
+                    const d = Math.hypot(point[0] - node.point[0], point[1] - node.point[1]);
+                    neighbors.push({ node, distance: d });
+
+                    const axis = node.axis;
+                    const diff = point[axis] - node.point[axis];
+                    const nearChild = diff < 0 ? node.left : node.right;
+                    const farChild = diff < 0 ? node.right : node.left;
+
+                    this._searchNearest(nearChild, point, k, neighbors);
+
+                    if (neighbors.size() < k || Math.abs(diff) < neighbors.peek().distance) {
+                        this._searchNearest(farChild, point, k, neighbors);
+                    }
+                }
+
+                clear() {
+                    this.root = null;
+                    this.points = [];
+                    this.insertionCount = 0;
+                    this.lastRebuildSize = 0;
+                }
+            }
+
+            // Fast binary heap with max size (for k-NN)
+            class FastBinaryHeap {
+                constructor(compare, maxSize) {
+                    this.compare = compare;
+                    this.maxSize = maxSize;
+                    this.heap = [];
+                }
+
+                push(item) {
+                    if (this.heap.length < this.maxSize) {
+                        this.heap.push(item);
+                        this._bubbleUp(this.heap.length - 1);
+                    } else if (this.compare(item, this.heap[0]) < 0) {
+                        this.heap[0] = item;
+                        this._sinkDown(0);
+                    }
+                }
+
+                peek() {
+                    return this.heap[0];
+                }
+
+                size() {
+                    return this.heap.length;
+                }
+
+                toArray() {
+                    return this.heap;
+                }
+
+                _bubbleUp(idx) {
+                    const item = this.heap[idx];
+                    while (idx > 0) {
+                        const parentIdx = Math.floor((idx - 1) / 2);
+                        if (this.compare(item, this.heap[parentIdx]) >= 0) break;
+                        this.heap[idx] = this.heap[parentIdx];
+                        idx = parentIdx;
+                    }
+                    this.heap[idx] = item;
+                }
+
+                _sinkDown(idx) {
+                    const item = this.heap[idx];
+                    const len = this.heap.length;
+                    while (true) {
+                        const leftIdx = 2 * idx + 1;
+                        const rightIdx = 2 * idx + 2;
+                        let swapIdx = -1;
+
+                        if (leftIdx < len && this.compare(this.heap[leftIdx], item) < 0) {
+                            swapIdx = leftIdx;
+                        }
+                        if (
+                            rightIdx < len &&
+                            this.compare(this.heap[rightIdx], item) < 0 &&
+                            (swapIdx === -1 ||
+                                this.compare(this.heap[rightIdx], this.heap[leftIdx]) < 0)
+                        ) {
+                            swapIdx = rightIdx;
+                        }
+
+                        if (swapIdx === -1) break;
+                        this.heap[idx] = this.heap[swapIdx];
+                        idx = swapIdx;
+                    }
+                    this.heap[idx] = item;
+                }
+            }
+
+            // ============================================
+            // CONVEX HULL & ONION PEELING ALGORITHMS
+            // ============================================
+
+            /**
+             * Convex Hull using Monotone Chain algorithm (Andrew's algorithm)
+             * O(N log N) complexity
+             * Returns hull points in counter-clockwise order
+             */
+            function convexHull(points) {
+                if (points.length <= 3) return [...points];
+
+                // Sort by x, then by y
+                const sorted = [...points].sort((a, b) => {
+                    if (a.x !== b.x) return a.x - b.x;
+                    return a.y - b.y;
+                });
+
+                // Cross product: > 0 means counter-clockwise turn
+                function cross(o, a, b) {
+                    return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+                }
+
+                // Build lower hull
+                const lower = [];
+                for (const p of sorted) {
+                    while (
+                        lower.length >= 2 &&
+                        cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+                    ) {
+                        lower.pop();
+                    }
+                    lower.push(p);
+                }
+
+                // Build upper hull
+                const upper = [];
+                for (let i = sorted.length - 1; i >= 0; i--) {
+                    const p = sorted[i];
+                    while (
+                        upper.length >= 2 &&
+                        cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+                    ) {
+                        upper.pop();
+                    }
+                    upper.push(p);
+                }
+
+                // Remove last point of each half (it's repeated)
+                lower.pop();
+                upper.pop();
+
+                return lower.concat(upper);
+            }
+
+            /**
+             * Onion Peeling Decomposition
+             * Returns array of layers, from outermost to innermost
+             */
+            function onionPeeling(allPoints) {
+                const layers = [];
+                let remaining = [...allPoints];
+
+                while (remaining.length > 0) {
+                    const hull = convexHull(remaining);
+                    if (hull.length === 0) break;
+
+                    layers.push(hull);
+
+                    // Remove hull points from remaining
+                    const hullIds = new Set(hull.map((p) => p.id));
+                    remaining = remaining.filter((p) => !hullIds.has(p.id));
+                }
+
+                return layers;
+            }
+
+            /**
+             * Get insertion order from onion layers
+             * Returns array of city IDs in order: layer0, layer1, layer2, ...
+             */
+            function getOnionInsertionOrder(layers) {
+                const order = [];
+                for (const layer of layers) {
+                    for (const point of layer) {
+                        order.push(point.id);
+                    }
+                }
+                return order;
+            }
+
+            // Colors for onion layers visualization
+            const ONION_LAYER_COLORS = [
+                '#ff0000',
+                '#ff8800',
+                '#ffff00',
+                '#88ff00',
+                '#00ff00',
+                '#00ff88',
+                '#00ffff',
+                '#0088ff',
+                '#0000ff',
+                '#8800ff',
+                '#ff00ff',
+                '#ff0088',
+                '#ff4444',
+                '#44ff44',
+                '#4444ff',
+            ];
+
+            // ============================================
+            // DOUBLY-LINKED LIST TOUR DATA STRUCTURE
+            // ============================================
+
+            class TourNode {
+                constructor(cityId) {
+                    this.cityId = cityId;
+                    this.prev = null;
+                    this.next = null;
+                }
+            }
+
+            class DoublyLinkedTour {
+                constructor() {
+                    this.head = null;
+                    this.nodeMap = new Map(); // cityId -> TourNode (O(1) lookup)
+                    this.size = 0;
+                }
+
+                // Insert after a specific node - O(1)
+                insertAfter(node, cityId) {
+                    const newNode = new TourNode(cityId);
+                    this.nodeMap.set(cityId, newNode);
+
+                    if (!node) {
+                        // First node
+                        this.head = newNode;
+                        newNode.next = newNode;
+                        newNode.prev = newNode;
+                    } else {
+                        const nextNode = node.next;
+                        newNode.prev = node;
+                        newNode.next = nextNode;
+                        node.next = newNode;
+                        nextNode.prev = newNode;
+                    }
+                    this.size++;
+                    return newNode;
+                }
+
+                // Remove a node - O(1)
+                remove(node) {
+                    if (this.size <= 1) {
+                        this.head = null;
+                        this.size = 0;
+                        this.nodeMap.delete(node.cityId);
+                        return;
+                    }
+
+                    const prevNode = node.prev;
+                    const nextNode = node.next;
+
+                    prevNode.next = nextNode;
+                    nextNode.prev = prevNode;
+
+                    if (this.head === node) {
+                        this.head = nextNode;
+                    }
+
+                    this.size--;
+                    this.nodeMap.delete(node.cityId);
+                }
+
+                // Move node to after targetNode - O(1)
+                moveToAfter(node, targetNode) {
+                    if (node === targetNode || node === targetNode.next) return;
+
+                    // Remove from current position
+                    node.prev.next = node.next;
+                    node.next.prev = node.prev;
+
+                    // Insert after target
+                    const nextNode = targetNode.next;
+                    node.prev = targetNode;
+                    node.next = nextNode;
+                    targetNode.next = node;
+                    nextNode.prev = node;
+                }
+
+                // Get node by cityId - O(1)
+                getNode(cityId) {
+                    return this.nodeMap.get(cityId);
+                }
+
+                // Check if city is in tour - O(1)
+                has(cityId) {
+                    return this.nodeMap.has(cityId);
+                }
+
+                // Get neighbors - O(1)
+                getNeighbors(cityId) {
+                    const node = this.nodeMap.get(cityId);
+                    return node ? [node.prev.cityId, node.next.cityId] : null;
+                }
+
+                // Convert to array for visualization - O(N)
+                toArray() {
+                    if (!this.head) return [];
+                    const result = [];
+                    let current = this.head;
+                    do {
+                        result.push(current.cityId);
+                        current = current.next;
+                    } while (current !== this.head);
+                    return result;
+                }
+
+                // Iterator for for...of loops
+                *[Symbol.iterator]() {
+                    if (!this.head) return;
+                    let current = this.head;
+                    do {
+                        yield current.cityId;
+                        current = current.next;
+                    } while (current !== this.head);
+                }
+
+                clear() {
+                    this.head = null;
+                    this.nodeMap.clear();
+                    this.size = 0;
+                }
+            }
+
+            // ============================================
+            // OBJECT POOL FOR SETS
+            // ============================================
+
+            class SetPool {
+                constructor(initialSize = 10) {
+                    this.available = [];
+                    this.inUse = new Set();
+
+                    // Pre-allocate sets
+                    for (let i = 0; i < initialSize; i++) {
+                        this.available.push(new Set());
+                    }
+                }
+
+                acquire() {
+                    let set = this.available.pop();
+                    if (!set) {
+                        set = new Set();
+                    }
+                    set.clear();
+                    this.inUse.add(set);
+                    return set;
+                }
+
+                release(set) {
+                    if (this.inUse.has(set)) {
+                        this.inUse.delete(set);
+                        set.clear();
+                        this.available.push(set);
+                    }
+                }
+
+                releaseAll() {
+                    this.inUse.forEach((set) => {
+                        set.clear();
+                        this.available.push(set);
+                    });
+                    this.inUse.clear();
+                }
+            }
+
+            // ============================================
+            // MAIN LOGIC
+            // ============================================
+
+            const canvas = document.getElementById('tspCanvas');
+            const ctx = canvas.getContext('2d');
+            const statsDiv = document.getElementById('stats');
+            const comparisonStatsDiv = document.getElementById('comparisonStats');
+            const perfStatsDiv = document.getElementById('perfStats');
+
+            let cities = [];
+            let originalCities = [];
+            let tour = new DoublyLinkedTour();
+            let kdtree = new OptimizedKDTree();
+            let isOptimizing = false;
+            let optimalValue = null;
+            let problemName = '';
+            let edgeWeightType = 'EUC_2D';
+            let explicitWeights = null;
+
+            // Transformation parameters for coordinate conversion (canvas <-> problem space)
+            let coordTransform = {
+                scale: 1,
+                offsetX: 0,
+                offsetY: 0,
+                minX: 0,
+                maxX: 0,
+                minY: 0,
+                maxY: 0,
+                isTransformed: false,
+            };
+
+            // Visual State
+            let activeSet = new Set();
+            let lastInsertedId = -1;
+            let inspectNeighbors = [];
+            let inspectPoint = null;
+
+            // Object pool
+            const setPool = new SetPool(20);
+
+            // Performance tracking
+            let performanceMetrics = {
+                insertions: 0,
+                totalInsertionTime: 0,
+                totalRippleIterations: 0,
+                avgRippleDepth: 0,
+            };
+
+            function clearCanvas() {
+                cities = [];
+                originalCities = [];
+                tour.clear();
+                kdtree.clear();
+                activeSet.clear();
+                inspectNeighbors = [];
+                inspectPoint = null;
+                optimalValue = null;
+                problemName = '';
+                edgeWeightType = 'EUC_2D';
+                explicitWeights = null;
+                coordTransform = {
+                    scale: 1,
+                    offsetX: 0,
+                    offsetY: 0,
+                    minX: 0,
+                    maxX: 0,
+                    minY: 0,
+                    maxY: 0,
+                    isTransformed: false,
+                };
+                setPool.releaseAll();
+                performanceMetrics = {
+                    insertions: 0,
+                    totalInsertionTime: 0,
+                    totalRippleIterations: 0,
+                    avgRippleDepth: 0,
+                };
+                updateComparisonStats();
+                drawState();
+            }
+
+            async function loadTSPLIB() {
+                if (isOptimizing) return;
+                const select = document.getElementById('tsplibSelect');
+                const filename = select.value;
+                if (!filename) {
+                    alert('Por favor, selecciona una instancia TSPLIB');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`data/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    clearCanvas();
+
+                    problemName = data.metadata.name;
+                    optimalValue = data.metadata.optimalDistance;
+                    edgeWeightType = data.metadata.edgeWeightType || 'EUC_2D';
+
+                    if (edgeWeightType === 'EXPLICIT' && data.edgeWeights) {
+                        explicitWeights = data.edgeWeights;
+                    } else {
+                        explicitWeights = null;
+                    }
+
+                    // Normalize coordinates to fit canvas
+                    const citiesData = data.cities;
+                    const xs = citiesData.map((c) => c.x);
+                    const ys = citiesData.map((c) => c.y);
+                    const minX = Math.min(...xs);
+                    const maxX = Math.max(...xs);
+                    const minY = Math.min(...ys);
+                    const maxY = Math.max(...ys);
+
+                    const padding = 50;
+                    const scaleX = (canvas.width - 2 * padding) / (maxX - minX || 1);
+                    const scaleY = (canvas.height - 2 * padding) / (maxY - minY || 1);
+                    const scale = Math.min(scaleX, scaleY);
+
+                    const offsetX = (canvas.width - (maxX - minX) * scale) / 2 - minX * scale;
+                    const offsetY = (canvas.height - (maxY - minY) * scale) / 2 - minY * scale;
+
+                    // Save transformation parameters for manual additions
+                    coordTransform = {
+                        scale: scale,
+                        offsetX: offsetX,
+                        offsetY: offsetY,
+                        minX: minX,
+                        maxX: maxX,
+                        minY: minY,
+                        maxY: maxY,
+                        isTransformed: true,
+                    };
+
+                    const autoplay = document.getElementById('autoplay').checked;
+                    const fastMode = document.getElementById('fastMode').checked;
+                    const useOnion = document.getElementById('useOnionPeeling').checked;
+                    const startTime = performance.now();
+
+                    // Pre-process all cities with normalized coordinates
+                    const normalizedCities = citiesData.map((city, idx) => ({
+                        id: idx,
+                        x: city.x * scale + offsetX,
+                        y: canvas.height - (city.y * scale + offsetY),
+                        originalX: city.x,
+                        originalY: city.y,
+                    }));
+
+                    if (useOnion && normalizedCities.length > 3) {
+                        // Use Onion Peeling for insertion order
+                        const layers = onionPeeling(normalizedCities);
+                        const insertionOrder = getOnionInsertionOrder(layers);
+
+                        console.log(`Onion Peeling: ${layers.length} capas`);
+                        layers.forEach((layer, i) => {
+                            console.log(`  Capa ${i}: ${layer.length} puntos`);
+                        });
+
+                        // Insert cities in onion order
+                        for (let i = 0; i < insertionOrder.length; i++) {
+                            const cityIdx = insertionOrder[i];
+                            const city = normalizedCities[cityIdx];
+                            const shouldAnimate =
+                                autoplay && !fastMode && i > insertionOrder.length - 5;
+                            await addCityInternal(
+                                city.x,
+                                city.y,
+                                shouldAnimate,
+                                city.originalX,
+                                city.originalY
+                            );
+                        }
+                    } else {
+                        // Original order (file order)
+                        for (let i = 0; i < citiesData.length; i++) {
+                            const city = citiesData[i];
+                            const originalX = city.x;
+                            const originalY = city.y;
+                            const x = originalX * scale + offsetX;
+                            const y = canvas.height - (originalY * scale + offsetY);
+
+                            const shouldAnimate =
+                                autoplay && !fastMode && i > citiesData.length - 5;
+                            await addCityInternal(x, y, shouldAnimate, originalX, originalY);
+                        }
+                    }
+
+                    const endTime = performance.now();
+                    const totalTime = (endTime - startTime).toFixed(1);
+
+                    updateStats(`Completado en ${totalTime}ms`);
+                    updatePerformanceStats();
+                    updateComparisonStats();
+                    drawState();
+                } catch (error) {
+                    console.error('Error loading TSPLIB instance:', error);
+                    alert(`Error cargando instancia: ${error.message}`);
+                }
+            }
+
+            async function generateRandom(n) {
+                if (isOptimizing) return;
+                clearCanvas();
+
+                const autoplay = document.getElementById('autoplay').checked;
+                const fastMode = document.getElementById('fastMode').checked;
+                const useOnion = document.getElementById('useOnionPeeling').checked;
+                const startTime = performance.now();
+
+                // Generate all cities first
+                const randomCities = [];
+                for (let i = 0; i < n; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    randomCities.push({ id: i, x, y, originalX: x, originalY: y });
+                }
+
+                if (useOnion && n > 3) {
+                    // Use Onion Peeling for insertion order
+                    const layers = onionPeeling(randomCities);
+                    const insertionOrder = getOnionInsertionOrder(layers);
+
+                    console.log(`Onion Peeling (Random): ${layers.length} capas`);
+
+                    // Insert cities in onion order
+                    for (let i = 0; i < insertionOrder.length; i++) {
+                        const cityIdx = insertionOrder[i];
+                        const city = randomCities[cityIdx];
+                        const shouldAnimate =
+                            autoplay && !fastMode && i > insertionOrder.length - 5;
+                        await addCityInternal(
+                            city.x,
+                            city.y,
+                            shouldAnimate,
+                            city.originalX,
+                            city.originalY
+                        );
+                    }
+                } else {
+                    // Original random order
+                    for (let i = 0; i < n; i++) {
+                        const city = randomCities[i];
+                        const shouldAnimate = autoplay && !fastMode && i > n - 5;
+                        await addCityInternal(city.x, city.y, shouldAnimate);
+                    }
+                }
+
+                const endTime = performance.now();
+                const totalTime = (endTime - startTime).toFixed(1);
+                updateStats(`Completado en ${totalTime}ms`);
+                updatePerformanceStats();
+                drawState();
+            }
+
+            canvas.addEventListener('click', async (event) => {
+                const mode = document.querySelector('input[name="mode"]:checked').value;
+                if (mode === 'insert') {
+                    if (isOptimizing) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    await addCityInternal(x, y, true);
+                }
+            });
+
+            canvas.addEventListener('mousemove', (event) => {
+                const mode = document.querySelector('input[name="mode"]:checked').value;
+                if (mode === 'inspect') {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    const k = parseInt(document.getElementById('kNeighbors').value);
+
+                    inspectPoint = { x, y };
+                    inspectNeighbors = kdtree.nearestNeighbors(x, y, k);
+                    drawState();
+                } else if (mode === 'onion') {
+                    // Force redraw to show onion layers
+                    drawState();
+                }
+            });
+
+            async function addCityInternal(x, y, animate, originalX = null, originalY = null) {
+                // Transform coordinates if adding manually after TSPLIB load
+                if (originalX === null && originalY === null && coordTransform.isTransformed) {
+                    // Convert canvas coordinates back to problem space
+                    // y = canvas.height - (originalY * scale + offsetY)
+                    // => originalY = (canvas.height - y - offsetY) / scale
+                    originalX = (x - coordTransform.offsetX) / coordTransform.scale;
+                    originalY = (canvas.height - y - coordTransform.offsetY) / coordTransform.scale;
+                }
+
+                const newCity = { x, y, id: cities.length };
+                cities.push(newCity);
+                originalCities.push({
+                    x: originalX !== null ? originalX : x,
+                    y: originalY !== null ? originalY : y,
+                    id: newCity.id,
+                });
+                kdtree.insert(newCity);
+                lastInsertedId = newCity.id;
+
+                const insertStartTime = performance.now();
+
+                if (cities.length <= 3) {
+                    // First 3 cities: simple circular tour
+                    const node = tour.insertAfter(tour.head, newCity.id);
+                    if (cities.length === 3) {
+                        // Complete the circle
+                        const nodes = [];
+                        for (const cityId of tour) {
+                            nodes.push(tour.getNode(cityId));
+                        }
+                        if (nodes.length === 3) {
+                            nodes[0].next = nodes[1];
+                            nodes[1].prev = nodes[0];
+                            nodes[1].next = nodes[2];
+                            nodes[2].prev = nodes[1];
+                            nodes[2].next = nodes[0];
+                            nodes[0].prev = nodes[2];
+                        }
+                    }
+                    drawState();
+                } else {
+                    await insertCityAndOptimize(newCity.id, animate);
+                }
+
+                const insertEndTime = performance.now();
+                performanceMetrics.insertions++;
+                performanceMetrics.totalInsertionTime += insertEndTime - insertStartTime;
+            }
+
+            async function insertCityAndOptimize(cityId, animate) {
+                isOptimizing = true;
+                const maxK = parseInt(document.getElementById('kNeighbors').value);
+                const delay = parseInt(document.getElementById('delay').value);
+
+                // 1. Find best insertion point using KD-Tree
+                const city = cities[cityId];
+                const nearestNeighbors = kdtree.nearestNeighbors(city.x, city.y, maxK);
+
+                let bestInsertion = { cost: Infinity, afterNode: null };
+
+                // Check insertion points near spatial neighbors
+                const checkedNodes = new Set();
+                for (const neighbor of nearestNeighbors) {
+                    const neighborNode = tour.getNode(neighbor.id);
+                    if (neighborNode && !checkedNodes.has(neighborNode)) {
+                        checkedNodes.add(neighborNode);
+                        const cost = insertionCost(
+                            cityId,
+                            neighborNode.cityId,
+                            neighborNode.next.cityId
+                        );
+                        if (cost < bestInsertion.cost) {
+                            bestInsertion = { cost, afterNode: neighborNode };
+                        }
+                    }
+                }
+
+                // Fallback: check a few random positions if no good candidates
+                if (bestInsertion.cost === Infinity) {
+                    let current = tour.head;
+                    let count = 0;
+                    do {
+                        const cost = insertionCost(cityId, current.cityId, current.next.cityId);
+                        if (cost < bestInsertion.cost) {
+                            bestInsertion = { cost, afterNode: current };
+                        }
+                        current = current.next;
+                        count++;
+                    } while (current !== tour.head && count < 20);
+                }
+
+                // Insert the city
+                const newNode = tour.insertAfter(bestInsertion.afterNode, cityId);
+
+                if (animate) {
+                    updateStats('Insertando...');
+                    drawState();
+                    await sleep(delay / 2);
+                }
+
+                // 2. Cascade Optimization
+                const startNodes = setPool.acquire();
+                startNodes.add(cityId);
+                startNodes.add(bestInsertion.afterNode.cityId);
+                startNodes.add(bestInsertion.afterNode.next.cityId);
+
+                // Add spatial neighbors to optimization set
+                for (const neighbor of nearestNeighbors.slice(
+                    0,
+                    Math.min(5, nearestNeighbors.length)
+                )) {
+                    if (tour.has(neighbor.id)) {
+                        startNodes.add(neighbor.id);
+                    }
+                }
+
+                const rippleStats = await optimizeRipple(startNodes, animate, maxK, delay);
+
+                setPool.release(startNodes);
+
+                performanceMetrics.totalRippleIterations += rippleStats.iterations;
+                performanceMetrics.avgRippleDepth =
+                    (performanceMetrics.avgRippleDepth * (performanceMetrics.insertions - 1) +
+                        rippleStats.maxDepth) /
+                    performanceMetrics.insertions;
+
+                isOptimizing = false;
+                lastInsertedId = -1;
+                activeSet.clear();
+                updateStats('Listo');
+                drawState();
+            }
+
+            async function optimizeRipple(initialSet, animate, maxK, delay) {
+                let modified = setPool.acquire();
+                initialSet.forEach((id) => modified.add(id));
+                activeSet = modified;
+
+                let iterations = 0;
+                let maxDepth = 0;
+                const MAX_ITER = cities.length * 5;
+
+                while (modified.size > 0 && iterations < MAX_ITER) {
+                    iterations++;
+                    maxDepth = Math.max(maxDepth, iterations);
+
+                    const currentCityId = modified.values().next().value;
+                    const currentNode = tour.getNode(currentCityId);
+
+                    if (!currentNode) {
+                        modified.delete(currentCityId);
+                        continue;
+                    }
+
+                    if (animate) {
+                        updateStats(`Evaluando nodo ${currentCityId}...`);
+                        drawState();
+                        await sleep(Math.max(10, delay / 3));
+                    }
+
+                    // Get spatial neighbors via KD-Tree
+                    const city = cities[currentCityId];
+                    const spatialNeighbors = kdtree.nearestNeighbors(city.x, city.y, maxK);
+
+                    // Calculate current cost
+                    const prevCityId = currentNode.prev.cityId;
+                    const nextCityId = currentNode.next.cityId;
+                    const currentCost =
+                        dist(cities[prevCityId], city) + dist(city, cities[nextCityId]);
+                    const bridgedCost = dist(cities[prevCityId], cities[nextCityId]);
+                    const savingByRemoval = currentCost - bridgedCost;
+
+                    let bestMove = { gain: 0, targetNode: null };
+
+                    // Check candidate positions near spatial neighbors
+                    for (const neighbor of spatialNeighbors) {
+                        if (!tour.has(neighbor.id)) continue;
+
+                        const neighborNode = tour.getNode(neighbor.id);
+                        const candidatePositions = [
+                            { after: neighborNode.prev, before: neighborNode },
+                            { after: neighborNode, before: neighborNode.next },
+                        ];
+
+                        for (const pos of candidatePositions) {
+                            // Skip if trying to insert next to self
+                            if (
+                                pos.after.cityId === currentCityId ||
+                                pos.before.cityId === currentCityId
+                            )
+                                continue;
+                            if (pos.after === currentNode || pos.before === currentNode) continue;
+
+                            const costToInsert =
+                                dist(cities[pos.after.cityId], city) +
+                                dist(city, cities[pos.before.cityId]) -
+                                dist(cities[pos.after.cityId], cities[pos.before.cityId]);
+
+                            const gain = savingByRemoval - costToInsert;
+
+                            if (gain > 0.000001 && gain > bestMove.gain) {
+                                bestMove = { gain, targetNode: pos.after };
+                            }
+                        }
+                    }
+
+                    if (bestMove.gain > 0) {
+                        // Apply move: relocate to after targetNode
+                        const oldPrev = currentNode.prev;
+                        const oldNext = currentNode.next;
+
+                        tour.moveToAfter(currentNode, bestMove.targetNode);
+
+                        // Propagate changes
+                        modified.add(oldPrev.cityId);
+                        modified.add(oldNext.cityId);
+                        modified.add(bestMove.targetNode.cityId);
+                        modified.add(bestMove.targetNode.next.cityId);
+                        modified.add(currentCityId);
+
+                        if (animate) {
+                            updateStats(
+                                `Moviendo nodo ${currentCityId} (Gain: ${bestMove.gain.toFixed(1)})`
+                            );
+                            drawState();
+                            await sleep(delay);
+                        }
+                    }
+
+                    modified.delete(currentCityId);
+                }
+
+                const stats = { iterations, maxDepth };
+                setPool.release(modified);
+                return stats;
+            }
+
+            function insertionCost(cityId, prevId, nextId) {
+                return (
+                    dist(cities[cityId], cities[prevId]) +
+                    dist(cities[cityId], cities[nextId]) -
+                    dist(cities[prevId], cities[nextId])
+                );
+            }
+
+            // Distance functions
+            function nint(x) {
+                return Math.floor(x + 0.5);
+            }
+
+            function toRad(coordinate) {
+                const PI = 3.141592;
+                const deg = Math.floor(coordinate);
+                const min = coordinate - deg;
+                return (PI * (deg + (5.0 * min) / 3.0)) / 180.0;
+            }
+
+            function distEUC2D(n1, n2) {
+                const xd = n1.x - n2.x;
+                const yd = n1.y - n2.y;
+                return nint(Math.sqrt(xd * xd + yd * yd));
+            }
+
+            function distCEIL2D(n1, n2) {
+                const xd = n1.x - n2.x;
+                const yd = n1.y - n2.y;
+                return Math.ceil(Math.sqrt(xd * xd + yd * yd));
+            }
+
+            function distATT(n1, n2) {
+                const xd = n1.x - n2.x;
+                const yd = n1.y - n2.y;
+                const rij = Math.sqrt((xd * xd + yd * yd) / 10.0);
+                const tij = nint(rij);
+                return tij < rij ? tij + 1 : tij;
+            }
+
+            function distGEO(n1, n2) {
+                const RRR = 6378.388;
+                const lat1 = toRad(n1.x);
+                const lon1 = toRad(n1.y);
+                const lat2 = toRad(n2.x);
+                const lon2 = toRad(n2.y);
+                const q1 = Math.cos(lon1 - lon2);
+                const q2 = Math.cos(lat1 - lat2);
+                const q3 = Math.cos(lat1 + lat2);
+                return Math.floor(RRR * Math.acos(0.5 * ((1.0 + q1) * q2 - (1.0 - q1) * q3)) + 1.0);
+            }
+
+            function dist(a, b) {
+                const origA = originalCities[a.id];
+                const origB = originalCities[b.id];
+                if (!origA || !origB) {
+                    return Math.hypot(a.x - b.x, a.y - b.y);
+                }
+
+                switch (edgeWeightType) {
+                    case 'GEO':
+                        return distGEO(origA, origB);
+                    case 'ATT':
+                        return distATT(origA, origB);
+                    case 'CEIL_2D':
+                        return distCEIL2D(origA, origB);
+                    case 'EXPLICIT':
+                        if (
+                            explicitWeights &&
+                            explicitWeights[a.id] &&
+                            explicitWeights[a.id][b.id] !== undefined
+                        ) {
+                            return explicitWeights[a.id][b.id];
+                        }
+                        return distEUC2D(origA, origB);
+                    case 'EUC_2D':
+                    default:
+                        return distEUC2D(origA, origB);
+                }
+            }
+
+            function tourCost() {
+                if (tour.size === 0) return 0;
+                let c = 0;
+                for (const cityId of tour) {
+                    const node = tour.getNode(cityId);
+                    c += dist(cities[cityId], cities[node.next.cityId]);
+                }
+                return c;
+            }
+
+            function sleep(ms) {
+                return new Promise((resolve) => setTimeout(resolve, ms));
+            }
+
+            function updateStats(state) {
+                const currentCost = tourCost();
+                const avgTime =
+                    performanceMetrics.insertions > 0
+                        ? (
+                              performanceMetrics.totalInsertionTime / performanceMetrics.insertions
+                          ).toFixed(1)
+                        : 0;
+                statsDiv.textContent = `Nodos: ${tour.size} | Costo: ${currentCost.toFixed(2)} | Tiempo/ins: ${avgTime}ms | Estado: ${state}`;
+                updateComparisonStats();
+            }
+
+            function updatePerformanceStats() {
+                if (performanceMetrics.insertions === 0) {
+                    perfStatsDiv.textContent = '';
+                    return;
+                }
+
+                const avgInsertionTime = (
+                    performanceMetrics.totalInsertionTime / performanceMetrics.insertions
+                ).toFixed(2);
+                const avgIterations = (
+                    performanceMetrics.totalRippleIterations / performanceMetrics.insertions
+                ).toFixed(1);
+                const complexity =
+                    tour.size > 0
+                        ? `O(${tour.size} log ${tour.size}) ≈ ${(tour.size * Math.log2(tour.size)).toFixed(0)} ops`
+                        : 'N/A';
+
+                perfStatsDiv.textContent = `⚡ Rendimiento: ${avgInsertionTime}ms/ins | Iteraciones ripple: ${avgIterations} | Complejidad: ${complexity}`;
+            }
+
+            function updateComparisonStats() {
+                if (!comparisonStatsDiv) return;
+
+                if (optimalValue && tour.size > 0) {
+                    const currentCost = tourCost();
+                    const deviation = (((currentCost - optimalValue) / optimalValue) * 100).toFixed(
+                        2
+                    );
+                    const ratio = (currentCost / optimalValue).toFixed(4);
+                    comparisonStatsDiv.textContent =
+                        `📊 ${problemName} | Óptimo: ${optimalValue.toFixed(2)} | ` +
+                        `Actual: ${currentCost.toFixed(2)} | ` +
+                        `Desviación: ${deviation}% | Ratio: ${ratio}`;
+                } else {
+                    comparisonStatsDiv.textContent = '';
+                }
+            }
+
+            function drawState() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw Tour
+                if (tour.size > 0) {
+                    ctx.beginPath();
+                    let first = true;
+                    for (const cityId of tour) {
+                        const city = cities[cityId];
+                        if (first) {
+                            ctx.moveTo(city.x, city.y);
+                            first = false;
+                        } else {
+                            ctx.lineTo(city.x, city.y);
+                        }
+                    }
+                    // Close the tour
+                    if (tour.size > 0) {
+                        const firstCity = cities[tour.head.cityId];
+                        ctx.lineTo(firstCity.x, firstCity.y);
+                    }
+                    ctx.strokeStyle = '#007bff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                // Inspect Mode: Lines to neighbors
+                if (
+                    document.querySelector('input[name="mode"]:checked').value === 'inspect' &&
+                    inspectPoint
+                ) {
+                    ctx.strokeStyle = 'rgba(0, 0, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    inspectNeighbors.forEach((n) => {
+                        ctx.beginPath();
+                        ctx.moveTo(inspectPoint.x, inspectPoint.y);
+                        ctx.lineTo(n.x, n.y);
+                        ctx.stroke();
+                    });
+                    ctx.beginPath();
+                    ctx.arc(inspectPoint.x, inspectPoint.y, 3, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'blue';
+                    ctx.fill();
+                }
+
+                // Onion Mode: Visualize convex hull layers
+                if (
+                    document.querySelector('input[name="mode"]:checked').value === 'onion' &&
+                    cities.length > 0
+                ) {
+                    const layers = onionPeeling(cities);
+
+                    // Draw each layer with different color
+                    layers.forEach((layer, layerIdx) => {
+                        if (layer.length < 3) return;
+
+                        ctx.beginPath();
+                        const color = ONION_LAYER_COLORS[layerIdx % ONION_LAYER_COLORS.length];
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+                        ctx.fillStyle = color + '33'; // Add transparency
+
+                        // Draw polygon
+                        for (let i = 0; i < layer.length; i++) {
+                            const city = layer[i];
+                            if (i === 0) {
+                                ctx.moveTo(city.x, city.y);
+                            } else {
+                                ctx.lineTo(city.x, city.y);
+                            }
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    });
+
+                    // Draw layer info
+                    ctx.fillStyle = '#333';
+                    ctx.font = '14px Arial';
+                    ctx.fillText(`Capas: ${layers.length}`, 10, 20);
+                    layers.forEach((layer, i) => {
+                        const color = ONION_LAYER_COLORS[i % ONION_LAYER_COLORS.length];
+                        ctx.fillStyle = color;
+                        ctx.fillRect(10, 30 + i * 18, 12, 12);
+                        ctx.fillStyle = '#333';
+                        ctx.fillText(`Capa ${i}: ${layer.length} pts`, 28, 40 + i * 18);
+                    });
+                }
+
+                // Draw Cities
+                for (const city of cities) {
+                    ctx.beginPath();
+                    ctx.arc(city.x, city.y, 5, 0, 2 * Math.PI);
+
+                    if (city.id === lastInsertedId)
+                        ctx.fillStyle = '#28a745'; // Green
+                    else if (activeSet.has(city.id))
+                        ctx.fillStyle = '#ffc107'; // Yellow
+                    else ctx.fillStyle = '#dc3545'; // Red
+
+                    ctx.fill();
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        </script>
+    </body>
+</html>
