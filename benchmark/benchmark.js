@@ -162,23 +162,24 @@ async function runBenchmark() {
   console.table(results);
 
   // Save Markdown Report
-  generateMarkdownReport(results, useOnion, 15, use2Opt); // Pass maxK and 2-opt to report
+  generateMarkdownReport(results, useOnion, 15, use2Opt, useOrOpt); // Pass maxK and options to report
 }
 
-function generateMarkdownReport(results, usedOnion, maxK, used2Opt) {
+function generateMarkdownReport(results, usedOnion, maxK, used2Opt, usedOrOpt) {
   const mdPath = path.join(process.cwd(), 'benchmark_report.md');
 
   let md = `# Ripple Insertion Benchmark Report\n\n`;
   md += `**Date:** ${new Date().toISOString().split('T')[0]}\n`;
   md += `**Strategy:** ${usedOnion ? 'Onion Peeling' : 'File Order'}\n`;
-  md += `**Neighbors (M):** ${maxK}\n`;
-  md += `**2-opt:** ${used2Opt ? 'Enabled (50 iterations)' : 'Disabled'}\n\n`;
-  md += `| Instance | N | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) | Ripples/Ins |\n`;
-  md += `|---|---|---|---|---|---|---|---|\n`;
+  md += `**Neighbors (M):** ${maxK} (adaptive)\n`;
+  md += `**2-opt:** ${used2Opt ? 'Enabled (50 iterations)' : 'Disabled'}\n`;
+  md += `**Or-opt:** ${usedOrOpt ? 'Enabled (50 iterations)' : 'Disabled'}\n\n`;
+  md += `| Instance | N | Type | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) | Ripples/Ins |\n`;
+  md += `|---|---|---|---|---|---|---|---|---|\n`;
 
   for (const r of results) {
     const opt = r.Optimal !== null ? r.Optimal : '-';
-    md += `| ${r.Instance} | ${r.N} | ${opt} | ${r.Achieved} | ${r['Gap (%)']} | ${r['Time (ms)']} | ${r['Time/Ins (ms)']} | ${r['Ripples/Ins']} |\n`;
+    md += `| ${r.Instance} | ${r.N} | ${r.Type || 'EUC_2D'} | ${opt} | ${r.Achieved} | ${r['Gap (%)']} | ${r['Time (ms)']} | ${r['Time/Ins (ms)']} | ${r['Ripples/Ins']} |\n`;
   }
 
   fs.writeFileSync(mdPath, md);
