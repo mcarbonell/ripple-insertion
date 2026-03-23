@@ -148,6 +148,7 @@ async function runBenchmark() {
     results.push({
       Instance: problemName,
       N,
+      Type: edgeWeightType,
       Optimal: optimalDistance,
       Achieved: finalCost,
       'Gap (%)': gap !== null ? gap.toFixed(2) + '%' : 'N/A',
