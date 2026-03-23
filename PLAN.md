@@ -18,12 +18,13 @@
 // Implemented API
 const solver = new RippleInsertion({
   maxK: 15,
-  enable2Opt: true,        // Enable 2-opt refinement
-  max2OptIterations: 50,   // Limit iterations per insertion
+  enable2Opt: true, // Enable 2-opt refinement
+  max2OptIterations: 50, // Limit iterations per insertion
 });
 ```
 
 **Actual Impact:**
+
 - Gap reduction: Significant improvements on several instances
   - `kroA100`: 0.11% → 0.05% (55% better)
   - `ch130`: 4.94% → 4.29% (13% better)
@@ -32,34 +33,37 @@ const solver = new RippleInsertion({
 - Still maintains real-time performance for N < 1000
 
 **Notes:**
+
 - 2-opt is applied after each insertion, which can be expensive
 - Consider making it optional only at the end (not after each insertion)
 - The improvement varies by instance - some benefit more than others
+  Vale
 
 ### 6.2 Adaptive M (Neighbors) as Function of N
 
 - [ ] Replace fixed `maxK` with adaptive formula
-- [ ] Default: `maxK = Math.min(25, Math.max(10, Math.floor(Math.sqrt(N))))`
+- [ ] Default: `maxK = Math.min(50, Math.floor(N * 0.15))` - scales better for large N
 - [ ] Allow manual override via options
 - [ ] Benchmark with different formulas
 
 ```javascript
-// Adaptive M implementation
+// Adaptive M implementation (updated formula)
 _getAdaptiveK() {
   const n = this.tour.size;
-  return Math.min(25, Math.max(10, Math.floor(Math.sqrt(n))));
+  return Math.min(50, Math.max(10, Math.floor(n * 0.15)));
 }
 ```
 
 **Expected Impact:**
+
 - Better quality for large instances (N > 200)
 - No performance degradation for small instances
 - More consistent gap across different problem sizes
 
 ### 6.3 Additional Local Search Operators
 
-- [ ] Implement Or-opt (relocate segments of 1-3 cities)
-- [ ] Implement 3-opt for critical improvements
+- [ ] Implement Or-opt (relocate segments of 1-3 cities) - prioritize first, cheaper than 3-opt
+- [ ] Implement 3-opt only if Or-opt shows significant gains - expensive O(N³)
 - [ ] Make operators configurable via options
 - [ ] Benchmark each operator's impact
 
@@ -67,11 +71,11 @@ _getAdaptiveK() {
 // Proposed operators configuration
 const solver = new RippleInsertion({
   operators: {
-    relocate: true,   // Current ripple (default)
-    twoOpt: true,     // 2-opt swaps
-    orOpt: true,      // Or-opt segments
-    threeOpt: false,  // 3-opt (expensive, optional)
-  }
+    relocate: true, // Current ripple (default)
+    twoOpt: true, // 2-opt swaps
+    orOpt: true, // Or-opt segments
+    threeOpt: false, // 3-opt (expensive, optional)
+  },
 });
 ```
 
@@ -95,7 +99,7 @@ solver.removeCity(cityId);
 ### 7.2 Batch Insertion Support
 
 - [ ] Implement `addCities(citiesArray)` method
-- [ ] Optimize insertion order (convex hull first)
+- [ ] Integrate convex hull / onion peeling as constructor options (already exist as utils)
 - [ ] Single ripple pass after all insertions
 - [ ] Benchmark vs sequential insertion
 
@@ -363,3 +367,9 @@ This algorithm was originally developed inside the k-alternatives repo as a "bon
 1. Different problem domain (dynamic vs static TSP)
 2. Different target audience (game devs, interactive apps vs researchers)
 3. Deserves its own identity, docs, and versioning
+
+### Pending Additions
+
+- **Ripple convergence metric**: Measure when ripple naturally stops without 2-opt
+- **Integrated convex hull/onion peeling**: Move utilities to constructor options
+- **TypeScript definitions**: Add .d.ts for type safety
