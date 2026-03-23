@@ -161,46 +161,49 @@ const solver = new RippleInsertion({
 Performance on standard TSPLIB instances (EUC*2D).
 \_Gap is compared against the known optimal static solution. The focus of this algorithm is speed per insertion, not finding the absolute static minimum.*
 
-#### Without 2-opt (Real-time insertion)
+#### Without post-processing (Real-time insertion)
 
 | Instance | N   | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
 | -------- | --- | ------- | -------- | ------- | --------- | ------------- |
-| berlin52 | 52  | 7542    | 7783     | 3.20%   | 11.8      | 0.226         |
-| eil51    | 51  | 426     | 448      | 5.16%   | 2.4       | 0.046         |
-| st70     | 70  | 675     | 703      | 4.15%   | 3.8       | 0.054         |
-| kroA100  | 100 | 21282   | 21305    | 0.11%   | 5.3       | 0.052         |
-| ch130    | 130 | 6110    | 6412     | 4.94%   | 12.2      | 0.093         |
-| ch150    | 150 | 6528    | 6992     | 7.11%   | 11.1      | 0.073         |
+| berlin52 | 52  | 7542    | 7783     | 3.20%   | 12.3      | 0.236         |
+| eil51    | 51  | 426     | 448      | 5.16%   | 4.2       | 0.081         |
+| st70     | 70  | 675     | 703      | 4.15%   | 4.1       | 0.058         |
+| kroA100  | 100 | 21282   | 21305    | 0.11%   | 7.2       | 0.072         |
+| ch130    | 130 | 6110    | 6412     | 4.94%   | 19.3      | 0.148         |
+| ch150    | 150 | 6528    | 6774     | 3.77%   | 20.6      | 0.137         |
 
-#### With 2-opt (Post-processing refinement)
+#### With 2-opt (Post-processing)
 
 | Instance | N   | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
 | -------- | --- | ------- | -------- | ------- | --------- | ------------- |
-| berlin52 | 52  | 7542    | 7783     | 3.20%   | 18.0      | 0.330         |
-| eil51    | 51  | 426     | 448      | 5.16%   | 4.8       | 0.091         |
-| st70     | 70  | 675     | 703      | 4.15%   | 4.3       | 0.059         |
-| kroA100  | 100 | 21282   | 21292    | 0.05%   | 17.0      | 0.161         |
-| ch130    | 130 | 6110    | 6372     | 4.29%   | 24.0      | 0.131         |
-| ch150    | 150 | 6528    | 6769     | 3.69%   | 25.6      | 0.136         |
+| berlin52 | 52  | 7542    | 7783     | 3.20%   | 15.8      | 0.294         |
+| eil51    | 51  | 426     | 448      | 5.16%   | 5.2       | 0.098         |
+| st70     | 70  | 675     | 703      | 4.15%   | 6.5       | 0.089         |
+| kroA100  | 100 | 21282   | 21292    | 0.05%   | 9.5       | 0.082         |
+| ch130    | 130 | 6110    | 6372     | 4.29%   | 34.4      | 0.210         |
+| ch150    | 150 | 6528    | 6688     | 2.45%   | 33.1      | 0.181         |
 
-**2-opt improvements:**
+#### With 2-opt + Or-opt (Best quality)
 
-- `kroA100`: 0.11% → 0.05% (55% better)
-- `ch130`: 4.94% → 4.29% (13% better)
-- `ch150`: 7.11% → 3.69% (48% better)
+| Instance | N   | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
+| -------- | --- | ------- | -------- | ------- | --------- | ------------- |
+| berlin52 | 52  | 7542    | 7783     | 3.20%   | 15.0      | 0.270         |
+| eil51    | 51  | 426     | 444      | 4.23%   | 5.9       | 0.076         |
+| st70     | 70  | 675     | 703      | 4.15%   | 4.1       | 0.052         |
+| kroA100  | 100 | 21282   | 21292    | 0.05%   | 9.7       | 0.083         |
+| ch130    | 130 | 6110    | 6372     | 4.29%   | 25.3      | 0.151         |
+| ch150    | 150 | 6528    | 6676     | 2.27%   | 40.6      | 0.172         |
 
-### Recent Improvements
+**Improvements over time:**
 
-**With File Order:**
+| Optimization | ch150 | kroA100 |
+| :----------- | :---- | :------ |
+| Baseline     | 7.11% | 0.11%   |
+| + Adaptive M | 3.77% | 0.11%   |
+| + 2-opt      | 2.45% | 0.05%   |
+| + Or-opt     | 2.27% | 0.05%   |
 
-- `kroA100` gap dropped from 0.70% to an impressive 0.11%.
-- `st70` gap dropped from 6.22% to 4.15%.
-- `ch150` gap dropped from 8.47% to 7.11%.
-
-**With Onion Peeling:**
-
-- `berlin52` gap dropped from 13.09% to 8.71%.
-- `kroA100` gap dropped from 11.21% to 7.27%.
+**Best improvement:** ch150: 7.11% → 2.27% (68% better)
 
 ### Comparison with other heuristics
 
