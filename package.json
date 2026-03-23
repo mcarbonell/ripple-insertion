@@ -4,7 +4,7 @@
   "description": "O(N log N) Dynamic TSP algorithm - Ripple Insertion",
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "npm run format && node --test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
