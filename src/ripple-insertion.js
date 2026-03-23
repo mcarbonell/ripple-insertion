@@ -779,6 +779,9 @@ export class RippleInsertion extends EventTarget {
       return this.maxK;
     }
     const n = this.tour.size;
-    return Math.min(50, Math.max(15, Math.floor(n * 0.2)));
+    if (n < 3) return 15;
+    // M scales logarithmically with N to maintain O(N log N) overall complexity
+    // e.g. N=16 -> M=16; N=100 -> M=26; N=1000 -> M=39; N=10000 -> M=53
+    return Math.max(15, Math.floor(4 * Math.log2(n)));
   }
 }
