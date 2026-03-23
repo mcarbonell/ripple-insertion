@@ -20,23 +20,59 @@ const args = parseArgs({
       short: 'o',
       default: false,
     },
-    'use-2opt': {
+    'disable-2opt': {
       type: 'boolean',
-      short: '2',
       default: false,
     },
-    'use-oropt': {
+    'disable-oropt': {
       type: 'boolean',
-      short: 'r',
       default: false,
     },
   },
 });
 
+function parseExplicitWeights(weights, N, format) {
+  if (!weights || weights.length === 0) return null;
+  const matrix = Array.from({ length: N }, () => new Array(N).fill(0));
+  let idx = 0;
+  if (format === 'UPPER_ROW') {
+    for (let i = 0; i < N - 1; i++) {
+      for (let j = i + 1; j < N; j++) {
+        matrix[i][j] = matrix[j][i] = weights[idx++];
+      }
+    }
+  } else if (format === 'LOWER_ROW') {
+    for (let i = 1; i < N; i++) {
+      for (let j = 0; j < i; j++) {
+        matrix[i][j] = matrix[j][i] = weights[idx++];
+      }
+    }
+  } else if (format === 'UPPER_DIAG_ROW') {
+    for (let i = 0; i < N; i++) {
+      for (let j = i; j < N; j++) {
+        matrix[i][j] = matrix[j][i] = weights[idx++];
+      }
+    }
+  } else if (format === 'LOWER_DIAG_ROW') {
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j <= i; j++) {
+        matrix[i][j] = matrix[j][i] = weights[idx++];
+      }
+    }
+  } else if (format === 'FULL_MATRIX') {
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        matrix[i][j] = weights[idx++];
+      }
+    }
+  }
+  return matrix;
+}
+
 const dataDir = args.values['data-dir'];
 const useOnion = args.values['use-onion'];
-const use2Opt = args.values['use-2opt'];
-const useOrOpt = args.values['use-oropt'];
+const use2Opt = !args.values['disable-2opt'];
+const useOrOpt = !args.values['disable-oropt'];
 
 console.log(
   `\n🚀 Starting Benchmark (Data Dir: ${dataDir} | Onion Peeling: ${useOnion} | 2-opt: ${use2Opt} | Or-opt: ${useOrOpt})\n`
@@ -63,18 +99,36 @@ async function runBenchmark() {
     const dataRaw = fs.readFileSync(filepath, 'utf8');
     const instance = JSON.parse(dataRaw);
 
-    if (!instance.metadata || !instance.cities) {
+    if (!instance.metadata) {
       continue;
     }
 
     const problemName = instance.metadata.name;
     const optimalDistance = instance.metadata.optimalDistance || null;
     const edgeWeightType = instance.metadata.edgeWeightType || 'EUC_2D';
-    const explicitWeights = instance.edgeWeights || null;
-    const citiesData = instance.cities;
-    const N = citiesData.length;
+    const edgeWeightFormat = instance.metadata.edgeWeightFormat || null;
+    let explicitWeights = instance.edgeWeights || null;
+    let citiesData = instance.cities || [];
+    let N = instance.metadata.dimension;
 
-    if (N > 200) continue;
+    // Handle missing coordinates for EXPLICIT instances
+    if (citiesData.length === 0 && N > 0) {
+      citiesData = Array.from({ length: N }, (_, i) => ({
+        x: Math.cos((i / N) * 2 * Math.PI) * 1000,
+        y: Math.sin((i / N) * 2 * Math.PI) * 1000,
+      }));
+    }
+
+    if (explicitWeights && edgeWeightFormat && !Array.isArray(explicitWeights[0])) {
+      explicitWeights = parseExplicitWeights(explicitWeights, N, edgeWeightFormat);
+    }
+
+    // Limit to 6000 for reasonable benchmark times
+    if (N > 6000) {
+      console.log(`Skipping ${problemName} (N=${N}) - too large for full benchmark run.`);
+      continue;
+    }
+    console.log(`Processing ${problemName} (N=${N})...`);
 
     if (!optimalDistance) continue;
 
@@ -157,6 +211,9 @@ async function runBenchmark() {
       'Ripples/Ins': (totalRippleSteps / N).toFixed(1),
     });
   }
+
+  // Sort results by N
+  results.sort((a, b) => a.N - b.N);
 
   // Print nicely formatted table
   console.table(results);
