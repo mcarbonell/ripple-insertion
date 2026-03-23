@@ -119,13 +119,23 @@ async function runBenchmark() {
       }));
     }
 
-    if (explicitWeights && edgeWeightFormat && !Array.isArray(explicitWeights[0])) {
-      explicitWeights = parseExplicitWeights(explicitWeights, N, edgeWeightFormat);
+    if (
+      explicitWeights &&
+      edgeWeightFormat &&
+      !Array.isArray(explicitWeights[0])
+    ) {
+      explicitWeights = parseExplicitWeights(
+        explicitWeights,
+        N,
+        edgeWeightFormat
+      );
     }
 
     // Limit to 6000 for reasonable benchmark times
     if (N > 6000) {
-      console.log(`Skipping ${problemName} (N=${N}) - too large for full benchmark run.`);
+      console.log(
+        `Skipping ${problemName} (N=${N}) - too large for full benchmark run.`
+      );
       continue;
     }
     console.log(`Processing ${problemName} (N=${N})...`);

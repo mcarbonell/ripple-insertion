@@ -61,8 +61,6 @@ _getAdaptiveK() {
 - ch150: 7.11% → 2.45% (65% better with 2-opt)
 - Small instances (N<100): uses minimum of 15 neighbors (same as before)
 
-
-
 **Expected Impact:**
 
 - Better quality for large instances (N > 200)
@@ -77,6 +75,7 @@ _getAdaptiveK() {
 - [x] Benchmark each operator's impact
 
 **Impact:**
+
 - Or-opt alone: eil51 5.16%→4.23%, ch150 3.77%→3.58%
 - Or-opt + 2-opt: ch150 2.45%→2.27%, eil51 5.16%→4.23%
 
