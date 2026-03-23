@@ -61,7 +61,7 @@ _getAdaptiveK() {
 - ch150: 7.11% → 2.45% (65% better with 2-opt)
 - Small instances (N<100): uses minimum of 15 neighbors (same as before)
 
-````
+
 
 **Expected Impact:**
 
@@ -100,7 +100,7 @@ const solver = new RippleInsertion({
     threeOpt: false, // 3-opt (expensive, optional)
   },
 });
-````
+```
 
 ---
 
