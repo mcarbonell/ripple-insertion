@@ -281,7 +281,11 @@ export class RippleInsertion extends EventTarget {
       this.dispatchEvent(
         new SafeCustomEvent('tourUpdated', { detail: { id } })
       );
-      return { iterations: 0, maxDepth: 0, twoOpt: { iterations: 0, improvements: 0 } };
+      return {
+        iterations: 0,
+        maxDepth: 0,
+        twoOpt: { iterations: 0, improvements: 0 },
+      };
     } else {
       return this._insertAndOptimize(id);
     }
@@ -487,9 +491,8 @@ export class RippleInsertion extends EventTarget {
 
     let iterations = 0;
     let maxDepth = 0;
-    const MAX_ITER = this.tour.size * 5;
 
-    while (modified.size > 0 && iterations < MAX_ITER) {
+    while (modified.size > 0) {
       iterations++;
       maxDepth = Math.max(maxDepth, iterations);
 
