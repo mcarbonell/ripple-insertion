@@ -376,6 +376,59 @@ export class RippleInsertion extends EventTarget {
   }
 
   /**
+   * Removes a city from the tour and triggers ripple optimization.
+   * @param {number} cityId - ID of the city to remove
+   * @returns {{ iterations: number, maxDepth: number, removedCost: number }}
+   */
+  removeCity(cityId) {
+    if (this.tour.size === 0) {
+      return { iterations: 0, maxDepth: 0, removedCost: 0 };
+    }
+
+    const node = this.tour.getNode(cityId);
+    if (!node) {
+      return { iterations: 0, maxDepth: 0, removedCost: 0 };
+    }
+
+    const prevNode = node.prev;
+    const nextNode = node.next;
+
+    const removedCost =
+      this.dist(this.cities[cityId], prevNode) +
+      this.dist(this.cities[cityId], nextNode) -
+      this.dist(this.cities[prevNode.cityId], this.cities[nextNode.cityId]);
+
+    this.tour.remove(node);
+    delete this.cities[cityId];
+    delete this.originalCities[cityId];
+    this.kdtree.remove(cityId);
+
+    if (this.tour.size < 3) {
+      this.dispatchEvent(
+        new SafeCustomEvent('tourUpdated', {
+          detail: { id: cityId, removed: true },
+        })
+      );
+      return { iterations: 0, maxDepth: 0, removedCost };
+    }
+
+    const affectedSet = this.setPool.acquire();
+    affectedSet.add(prevNode.cityId);
+    affectedSet.add(nextNode.cityId);
+
+    const rippleStats = this._optimizeRipple(affectedSet);
+    this.setPool.release(affectedSet);
+
+    this.dispatchEvent(
+      new SafeCustomEvent('tourUpdated', {
+        detail: { id: cityId, removed: true },
+      })
+    );
+
+    return { ...rippleStats, removedCost };
+  }
+
+  /**
    * Applies 2-opt optimization to the entire tour.
    * Should be called after all cities have been added.
    * @returns {{ iterations: number, improvements: number }}

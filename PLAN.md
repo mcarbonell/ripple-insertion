@@ -92,16 +92,17 @@ const solver = new RippleInsertion({
 
 ## Phase 7: Functionality Extensions (📋 Pending - Medium Priority)
 
-### 7.1 City Removal Support
+### 7.1 City Removal Support ✅
 
-- [ ] Implement `removeCity(cityId)` method
-- [ ] Handle tour reconnection after removal
-- [ ] Trigger ripple optimization on affected area
-- [ ] Add tests for removal edge cases
+- [x] Implement `removeCity(cityId)` method
+- [x] Handle tour reconnection after removal
+- [x] Trigger ripple optimization on affected area
+- [x] Add tests for removal edge cases
+- [x] Add `remove(id)` method to KD-tree
 
 ```javascript
-// Proposed API
-solver.removeCity(cityId);
+// Implemented API
+const stats = solver.removeCity(cityId);
 // Returns: { iterations, maxDepth, removedCost }
 ```
 

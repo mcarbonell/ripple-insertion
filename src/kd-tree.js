@@ -175,4 +175,16 @@ export class OptimizedKDTree {
     this.insertionCount = 0;
     this.lastRebuildSize = 0;
   }
+
+  remove(cityId) {
+    const idx = this.points.findIndex((p) => p.data.id === cityId);
+    if (idx !== -1) {
+      this.points.splice(idx, 1);
+    }
+    if (this.points.length === 0) {
+      this.root = null;
+    } else {
+      this.rebuild();
+    }
+  }
 }

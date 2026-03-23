@@ -87,6 +87,22 @@ const optimizedCost = solver.getCost();
 - Typically improves gap by 1-3% on standard benchmarks
 - Best for tours with 50+ cities
 
+### City Removal
+
+You can also remove cities dynamically from the tour:
+
+```javascript
+// Remove a city from the tour
+const removeStats = solver.removeCity(1);
+console.log(
+  `Removed city 1: ${removeStats.removedCost} cost savings in ${removeStats.iterations} ripple iterations`
+);
+
+// Get the updated tour
+const tour = solver.getTour();
+const cost = solver.getCost();
+```
+
 ## 📊 Benchmarks
 
 Performance on standard TSPLIB instances (EUC*2D).
