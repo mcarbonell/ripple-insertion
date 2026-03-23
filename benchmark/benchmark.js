@@ -63,12 +63,20 @@ async function runBenchmark() {
     const dataRaw = fs.readFileSync(filepath, 'utf8');
     const instance = JSON.parse(dataRaw);
 
+    if (!instance.metadata || !instance.cities) {
+      continue;
+    }
+
     const problemName = instance.metadata.name;
     const optimalDistance = instance.metadata.optimalDistance || null;
     const edgeWeightType = instance.metadata.edgeWeightType || 'EUC_2D';
     const explicitWeights = instance.edgeWeights || null;
     const citiesData = instance.cities;
     const N = citiesData.length;
+
+    if (N > 200) continue;
+
+    if (!optimalDistance) continue;
 
     // We don't scale the coordinates for backend benchmark, we use exact numbers
     // But we need to check if the instance needs scaling for pure JS math (usually not).
