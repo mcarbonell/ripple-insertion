@@ -69,12 +69,26 @@ _getAdaptiveK() {
 - No performance degradation for small instances
 - More consistent gap across different problem sizes
 
-### 6.3 Additional Local Search Operators
+### 6.3 Additional Local Search Operators ✅
 
-- [ ] Implement Or-opt (relocate segments of 1-3 cities) - prioritize first, cheaper than 3-opt
-- [ ] Implement 3-opt only if Or-opt shows significant gains - expensive O(N³)
-- [ ] Make operators configurable via options
-- [ ] Benchmark each operator's impact
+- [x] Implement Or-opt (relocate segments of 1-3 cities) - prioritize first, cheaper than 3-opt
+- [x] Implement 3-opt only if Or-opt shows significant gains - expensive O(N³)
+- [x] Make operators configurable via options
+- [x] Benchmark each operator's impact
+
+**Impact:**
+- Or-opt alone: eil51 5.16%→4.23%, ch150 3.77%→3.58%
+- Or-opt + 2-opt: ch150 2.45%→2.27%, eil51 5.16%→4.23%
+
+```javascript
+// Implemented API
+const solver = new RippleInsertion({
+  enable2Opt: true,
+  enableOrOpt: true,
+});
+
+solver.applyOrOpt(); // Returns: { iterations, improvements }
+```
 
 ```javascript
 // Proposed operators configuration

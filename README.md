@@ -132,6 +132,30 @@ console.log(
 - Provides better initial tour structure
 - Reduces total ripple iterations
 
+### Post-Processing Optimization
+
+After inserting all cities, you can apply local search operators to improve tour quality:
+
+```javascript
+// Apply 2-opt optimization
+const twoOptStats = solver.apply2Opt();
+
+// Apply Or-opt optimization
+const orOptStats = solver.applyOrOpt();
+
+// Or enable both during solver initialization
+const solver = new RippleInsertion({
+  enable2Opt: true,
+  enableOrOpt: true,
+});
+```
+
+**Operator effects:**
+
+- **2-opt**: Reverses tour segments to eliminate edge crossings
+- **Or-opt**: Relocates cities to better positions in the tour
+- Combined: Best quality, moderate time increase
+
 ## 📊 Benchmarks
 
 Performance on standard TSPLIB instances (EUC*2D).

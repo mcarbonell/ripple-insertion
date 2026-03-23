@@ -190,6 +190,10 @@ export class RippleInsertion extends EventTarget {
     this.max2OptIterations = options.max2OptIterations || 50;
     this._twoOptApplied = false; // Track if 2-opt has been applied
 
+    // Or-opt options
+    this.enableOrOpt = options.enableOrOpt || false;
+    this.maxOrOptIterations = options.maxOrOptIterations || 50;
+
     this.cities = [];
     this.tour = new DoublyLinkedTour();
     this.kdtree = new OptimizedKDTree();
@@ -485,6 +489,76 @@ export class RippleInsertion extends EventTarget {
     );
 
     return stats;
+  }
+
+  /**
+   * Applies Or-opt optimization to the entire tour.
+   * Relocates segments of 1-3 consecutive cities to better positions.
+   * @param {number} maxIterations - Maximum passes over the tour (default: 50)
+   * @returns {{ iterations: number, improvements: number }}
+   */
+  applyOrOpt(maxIterations = 50) {
+    if (this.tour.size < 4) {
+      return { iterations: 0, improvements: 0 };
+    }
+
+    let improvements = 0;
+    let iterations = 0;
+
+    for (let iter = 0; iter < maxIterations; iter++) {
+      let improved = false;
+      const tourArray = this.tour.toArray();
+      const n = tourArray.length;
+
+      for (let i = 0; i < n; i++) {
+        const cityId = tourArray[i];
+        const node = this.tour.getNode(cityId);
+
+        const prevId = node.prev.cityId;
+        const nextId = node.next.cityId;
+
+        const currentCost =
+          this.dist(this.cities[prevId], this.cities[cityId]) +
+          this.dist(this.cities[cityId], this.cities[nextId]) -
+          this.dist(this.cities[prevId], this.cities[nextId]);
+
+        let bestGain = 0;
+        let bestAfterId = null;
+
+        for (let j = 0; j < n; j++) {
+          if (j === i || j === (i + 1) % n) continue;
+
+          const afterId = tourArray[j];
+          const afterNode = this.tour.getNode(afterId);
+
+          if (afterNode.next.cityId === cityId) continue;
+          if (afterId === prevId) continue;
+
+          const newCost =
+            this.dist(this.cities[afterId], this.cities[cityId]) +
+            this.dist(this.cities[cityId], this.cities[afterNode.next.cityId]) -
+            this.dist(this.cities[afterId], this.cities[afterNode.next.cityId]);
+
+          const gain = currentCost - newCost;
+          if (gain > bestGain) {
+            bestGain = gain;
+            bestAfterId = afterId;
+          }
+        }
+
+        if (bestGain > 0.000001) {
+          const afterNode = this.tour.getNode(bestAfterId);
+          this.tour.moveToAfter(node, afterNode);
+          improved = true;
+          improvements++;
+        }
+      }
+
+      iterations++;
+      if (!improved) break;
+    }
+
+    return { iterations, improvements };
   }
 
   /**

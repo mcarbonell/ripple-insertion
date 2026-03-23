@@ -25,15 +25,21 @@ const args = parseArgs({
       short: '2',
       default: false,
     },
+    'use-oropt': {
+      type: 'boolean',
+      short: 'r',
+      default: false,
+    },
   },
 });
 
 const dataDir = args.values['data-dir'];
 const useOnion = args.values['use-onion'];
 const use2Opt = args.values['use-2opt'];
+const useOrOpt = args.values['use-oropt'];
 
 console.log(
-  `\n🚀 Starting Benchmark (Data Dir: ${dataDir} | Onion Peeling: ${useOnion} | 2-opt: ${use2Opt})\n`
+  `\n🚀 Starting Benchmark (Data Dir: ${dataDir} | Onion Peeling: ${useOnion} | 2-opt: ${use2Opt} | Or-opt: ${useOrOpt})\n`
 );
 
 async function runBenchmark() {
@@ -70,7 +76,10 @@ async function runBenchmark() {
     const solver = new RippleInsertion({
       edgeWeightType,
       explicitWeights,
-      maxK: 15, // Usually an adaptive M is better, but keeping 15 as base
+      maxK: 15,
+      adaptiveMaxK: true,
+      enable2Opt: use2Opt,
+      enableOrOpt: useOrOpt,
     });
 
     const startTotal = performance.now();
@@ -106,10 +115,16 @@ async function runBenchmark() {
       }
     }
 
-    // Apply 2-opt if enabled (after all insertions)
+    // Apply post-processing operators if enabled (after all insertions)
     let twoOptStats = { iterations: 0, improvements: 0 };
+    let orOptStats = { iterations: 0, improvements: 0 };
+
     if (use2Opt) {
       twoOptStats = solver.apply2Opt();
+    }
+
+    if (useOrOpt) {
+      orOptStats = solver.applyOrOpt();
     }
 
     const endTotal = performance.now();
