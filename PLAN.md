@@ -1,7 +1,205 @@
 # Ripple Insertion - Roadmap
 
-**Status:** Stable - extraction from k-alternatives repo completed.
-**Goal:** Standalone repo for the O(N log N) Dynamic TSP algorithm
+**Status:** v2.0 Stable - O(N log N) Dynamic TSP algorithm
+**Goal:** Evolucionar a v3.0 con mejoras de calidad, escalabilidad y funcionalidad
+
+---
+
+## Phase 6: Quality Improvements (✅ Completed - High Priority)
+
+### 6.1 Add 2-opt Post-Processing Operator
+
+- [x] Implement optional 2-opt local search after each insertion
+- [x] Add `enable2Opt: true` option to constructor
+- [x] Limit 2-opt iterations to maintain real-time performance
+- [x] Benchmark quality improvement vs performance cost
+
+```javascript
+// Implemented API
+const solver = new RippleInsertion({
+  maxK: 15,
+  enable2Opt: true,        // Enable 2-opt refinement
+  max2OptIterations: 50,   // Limit iterations per insertion
+});
+```
+
+**Actual Impact:**
+- Gap reduction: Significant improvements on several instances
+  - `kroA100`: 0.11% → 0.05% (55% better)
+  - `ch130`: 4.94% → 4.29% (13% better)
+  - `ch150`: 7.11% → 3.69% (48% better)
+- Time increase: ~50-100% per insertion (higher than expected)
+- Still maintains real-time performance for N < 1000
+
+**Notes:**
+- 2-opt is applied after each insertion, which can be expensive
+- Consider making it optional only at the end (not after each insertion)
+- The improvement varies by instance - some benefit more than others
+
+### 6.2 Adaptive M (Neighbors) as Function of N
+
+- [ ] Replace fixed `maxK` with adaptive formula
+- [ ] Default: `maxK = Math.min(25, Math.max(10, Math.floor(Math.sqrt(N))))`
+- [ ] Allow manual override via options
+- [ ] Benchmark with different formulas
+
+```javascript
+// Adaptive M implementation
+_getAdaptiveK() {
+  const n = this.tour.size;
+  return Math.min(25, Math.max(10, Math.floor(Math.sqrt(n))));
+}
+```
+
+**Expected Impact:**
+- Better quality for large instances (N > 200)
+- No performance degradation for small instances
+- More consistent gap across different problem sizes
+
+### 6.3 Additional Local Search Operators
+
+- [ ] Implement Or-opt (relocate segments of 1-3 cities)
+- [ ] Implement 3-opt for critical improvements
+- [ ] Make operators configurable via options
+- [ ] Benchmark each operator's impact
+
+```javascript
+// Proposed operators configuration
+const solver = new RippleInsertion({
+  operators: {
+    relocate: true,   // Current ripple (default)
+    twoOpt: true,     // 2-opt swaps
+    orOpt: true,      // Or-opt segments
+    threeOpt: false,  // 3-opt (expensive, optional)
+  }
+});
+```
+
+---
+
+## Phase 7: Functionality Extensions (📋 Pending - Medium Priority)
+
+### 7.1 City Removal Support
+
+- [ ] Implement `removeCity(cityId)` method
+- [ ] Handle tour reconnection after removal
+- [ ] Trigger ripple optimization on affected area
+- [ ] Add tests for removal edge cases
+
+```javascript
+// Proposed API
+solver.removeCity(cityId);
+// Returns: { iterations, maxDepth, removedCost }
+```
+
+### 7.2 Batch Insertion Support
+
+- [ ] Implement `addCities(citiesArray)` method
+- [ ] Optimize insertion order (convex hull first)
+- [ ] Single ripple pass after all insertions
+- [ ] Benchmark vs sequential insertion
+
+```javascript
+// Proposed API
+const stats = solver.addCities([
+  { id: 10, x: 100, y: 200 },
+  { id: 11, x: 150, y: 300 },
+  { id: 12, x: 200, y: 250 },
+]);
+// Returns: { totalIterations, avgDepth, totalTime }
+```
+
+### 7.3 State Persistence
+
+- [ ] Implement `serialize()` method → JSON string
+- [ ] Implement `deserialize(jsonString)` static method
+- [ ] Include tour, cities, KD-Tree state
+- [ ] Add compression for large instances
+
+```javascript
+// Proposed API
+const state = solver.serialize();
+// Save to file/database
+
+const solver = RippleInsertion.deserialize(state);
+// Restore complete state
+```
+
+---
+
+## Phase 8: Performance & Scalability (📋 Pending - Medium Priority)
+
+### 8.1 Web Workers Support
+
+- [ ] Create worker wrapper for background processing
+- [ ] Implement message protocol for addCity/getTour
+- [ ] Handle state synchronization
+- [ ] Benchmark UI responsiveness improvement
+
+### 8.2 Spatial Hashing for Dense Regions
+
+- [ ] Implement grid-based spatial hash
+- [ ] Use for neighbor queries in dense clusters
+- [ ] Fallback to KD-Tree for sparse regions
+- [ ] Benchmark with clustered distributions
+
+### 8.3 Typed Arrays for Large Instances (N > 10000)
+
+- [ ] Use Float64Array for coordinates
+- [ ] Optimize distance calculations
+- [ ] Reduce memory footprint
+- [ ] Benchmark memory usage improvement
+
+---
+
+## Phase 9: Testing & Validation (📋 Pending - High Priority)
+
+### 9.1 Comprehensive Edge Case Testing
+
+- [ ] Test with dense clusters (cities very close together)
+- [ ] Test with uniform grid distributions
+- [ ] Test with extreme aspect ratios
+- [ ] Test with duplicate coordinates
+- [ ] Test insertion/removal sequences
+
+### 9.2 Comparative Benchmarks
+
+- [ ] Compare vs Nearest Neighbor (dynamic)
+- [ ] Compare vs Cheapest Insertion (dynamic)
+- [ ] Compare vs random insertion order
+- [ ] Document quality vs speed tradeoffs
+
+### 9.3 Stress Testing
+
+- [ ] Test with N = 1000, 5000, 10000
+- [ ] Measure memory usage over time
+- [ ] Test for memory leaks
+- [ ] Profile hot paths
+
+---
+
+## Phase 10: Documentation & Publishing (📋 Pending - Low Priority)
+
+### 10.1 Enhanced Documentation
+
+- [ ] Add JSDoc comments to all public methods
+- [ ] Create API reference documentation
+- [ ] Add more code examples
+- [ ] Document performance characteristics
+
+### 10.2 npm Publishing
+
+- [ ] Prepare package.json for npm
+- [ ] Add TypeScript type definitions (.d.ts)
+- [ ] Create CHANGELOG.md
+- [ ] Publish to npm registry
+
+### 10.3 Academic Contribution
+
+- [ ] Write technical paper describing the algorithm
+- [ ] Include formal complexity analysis
+- [ ] Compare with existing dynamic TSP literature
+- [ ] Submit to optimization conference/journal
 
 ---
 

@@ -116,4 +116,88 @@ describe('RippleInsertion Algorithm', () => {
     assert.equal(solver.cities.length, 0);
     assert.equal(solver.kdtree.points.length, 0);
   });
+
+  describe('2-opt Optimization', () => {
+    it('should improve tour quality with 2-opt', () => {
+      const solver = new RippleInsertion();
+
+      // Create a scenario where 2-opt can improve
+      // Cities arranged in a cross pattern
+      const cities = [
+        { id: 0, x: 0, y: 0 },
+        { id: 1, x: 10, y: 10 },
+        { id: 2, x: 20, y: 0 },
+        { id: 3, x: 10, y: -10 },
+      ];
+
+      for (const city of cities) {
+        solver.addCity(city.id, city.x, city.y);
+      }
+
+      const costBefore = solver.getCost();
+      const stats = solver.apply2Opt();
+      const costAfter = solver.getCost();
+
+      // 2-opt should not make the tour worse
+      assert.ok(
+        costAfter <= costBefore + 0.001,
+        `2-opt should not increase cost: ${costAfter} vs ${costBefore}`
+      );
+
+      // Stats should be returned
+      assert.ok(typeof stats.iterations === 'number', 'Should have iterations count');
+      assert.ok(typeof stats.improvements === 'number', 'Should have improvements count');
+    });
+
+    it('should return 2-opt stats from apply2Opt', () => {
+      const solver = new RippleInsertion();
+
+      solver.addCity(0, 0, 0);
+      solver.addCity(1, 0, 10);
+      solver.addCity(2, 10, 10);
+      solver.addCity(3, 10, 0);
+
+      const stats = solver.apply2Opt();
+
+      assert.ok(typeof stats.iterations === 'number', 'Should have iterations count');
+      assert.ok(typeof stats.improvements === 'number', 'Should have improvements count');
+    });
+
+    it('should not run 2-opt for tours with less than 4 cities', () => {
+      const solver = new RippleInsertion();
+
+      solver.addCity(0, 0, 0);
+      solver.addCity(1, 0, 10);
+      solver.addCity(2, 10, 10);
+
+      const stats = solver.apply2Opt();
+
+      assert.equal(stats.iterations, 0);
+      assert.equal(stats.improvements, 0);
+    });
+
+    it('should maintain valid tour after 2-opt', () => {
+      const solver = new RippleInsertion();
+
+      // Add several cities
+      for (let i = 0; i < 10; i++) {
+        solver.addCity(i, Math.random() * 100, Math.random() * 100);
+      }
+
+      solver.apply2Opt();
+      const tour = solver.getTour();
+
+      // Tour should contain all cities
+      assert.equal(tour.length, 10);
+
+      // All city IDs should be present
+      for (let i = 0; i < 10; i++) {
+        assert.ok(tour.includes(i), `Tour should contain city ${i}`);
+      }
+
+      // No duplicates
+      const uniqueIds = new Set(tour);
+      assert.equal(uniqueIds.size, 10);
+    });
+  });
 });

@@ -184,6 +184,11 @@ export class RippleInsertion extends EventTarget {
     this.explicitWeights = options.explicitWeights || null;
     this.maxK = options.maxK || 20; // Number of neighbors to consider
 
+    // 2-opt options
+    this.enable2Opt = options.enable2Opt || false;
+    this.max2OptIterations = options.max2OptIterations || 50;
+    this._twoOptApplied = false; // Track if 2-opt has been applied
+
     this.cities = [];
     this.tour = new DoublyLinkedTour();
     this.kdtree = new OptimizedKDTree();
@@ -276,7 +281,7 @@ export class RippleInsertion extends EventTarget {
       this.dispatchEvent(
         new SafeCustomEvent('tourUpdated', { detail: { id } })
       );
-      return { iterations: 0, maxDepth: 0 };
+      return { iterations: 0, maxDepth: 0, twoOpt: { iterations: 0, improvements: 0 } };
     } else {
       return this._insertAndOptimize(id);
     }
@@ -362,6 +367,118 @@ export class RippleInsertion extends EventTarget {
       new SafeCustomEvent('tourUpdated', { detail: { id: cityId } })
     );
     return rippleStats;
+  }
+
+  /**
+   * Applies 2-opt optimization to the entire tour.
+   * Should be called after all cities have been added.
+   * @returns {{ iterations: number, improvements: number }}
+   */
+  apply2Opt() {
+    if (this.tour.size < 4) {
+      return { iterations: 0, improvements: 0 };
+    }
+
+    const stats = this._twoOptOptimize();
+    this._twoOptApplied = true;
+
+    this.dispatchEvent(
+      new SafeCustomEvent('tourUpdated', { detail: { id: '2opt' } })
+    );
+
+    return stats;
+  }
+
+  /**
+   * 2-opt local search optimization.
+   * Reverses tour segments to eliminate edge crossings.
+   * @returns {{ iterations: number, improvements: number }}
+   */
+  _twoOptOptimize() {
+    let improvements = 0;
+    let iterations = 0;
+    const n = this.tour.size;
+
+    if (n < 4) return { iterations: 0, improvements: 0 };
+
+    const tourArray = this.tour.toArray();
+
+    for (let i = 0; i < Math.min(this.max2OptIterations, n); i++) {
+      let improved = false;
+
+      for (let a = 0; a < n - 1; a++) {
+        for (let b = a + 2; b < n; b++) {
+          if (a === 0 && b === n - 1) continue;
+
+          const cityA = tourArray[a];
+          const cityB = tourArray[(a + 1) % n];
+          const cityC = tourArray[b];
+          const cityD = tourArray[(b + 1) % n];
+
+          const currentDist =
+            this.dist(this.cities[cityA], this.cities[cityB]) +
+            this.dist(this.cities[cityC], this.cities[cityD]);
+
+          const newDist =
+            this.dist(this.cities[cityA], this.cities[cityC]) +
+            this.dist(this.cities[cityB], this.cities[cityD]);
+
+          if (newDist < currentDist - 0.000001) {
+            this._reverseSegment(a + 1, b);
+            improved = true;
+            improvements++;
+
+            // Update tour array after reversal
+            const newTour = this.tour.toArray();
+            for (let k = 0; k < n; k++) {
+              tourArray[k] = newTour[k];
+            }
+          }
+        }
+        iterations++;
+      }
+
+      if (!improved) break;
+    }
+
+    return { iterations, improvements };
+  }
+
+  /**
+   * Reverses a segment of the tour from index start to end (inclusive).
+   * Uses DoublyLinkedTour API to maintain data structure integrity.
+   * @param {number} start - Start index in tour array
+   * @param {number} end - End index in tour array
+   */
+  _reverseSegment(start, end) {
+    const tourArray = this.tour.toArray();
+    const n = tourArray.length;
+
+    if (start >= end || start < 0 || end >= n) return;
+
+    // Get nodes for the segment
+    const segmentNodes = [];
+    for (let i = start; i <= end; i++) {
+      const node = this.tour.getNode(tourArray[i]);
+      if (node) segmentNodes.push(node);
+    }
+
+    if (segmentNodes.length < 2) return;
+
+    // Get the node before the segment (or null if segment starts at head)
+    const beforeSegment = segmentNodes[0].prev;
+    const afterSegment = segmentNodes[segmentNodes.length - 1].next;
+
+    // Remove all nodes in the segment
+    for (const node of segmentNodes) {
+      this.tour.remove(node);
+    }
+
+    // Re-insert in reversed order
+    let insertAfter = beforeSegment;
+    for (let i = segmentNodes.length - 1; i >= 0; i--) {
+      insertAfter = this.tour.insertAfter(insertAfter, segmentNodes[i].cityId);
+    }
   }
 
   _optimizeRipple(initialSet) {

@@ -20,14 +20,20 @@ const args = parseArgs({
       short: 'o',
       default: false,
     },
+    'use-2opt': {
+      type: 'boolean',
+      short: '2',
+      default: false,
+    },
   },
 });
 
 const dataDir = args.values['data-dir'];
 const useOnion = args.values['use-onion'];
+const use2Opt = args.values['use-2opt'];
 
 console.log(
-  `\n🚀 Starting Benchmark (Data Dir: ${dataDir} | Onion Peeling: ${useOnion})\n`
+  `\n🚀 Starting Benchmark (Data Dir: ${dataDir} | Onion Peeling: ${useOnion} | 2-opt: ${use2Opt})\n`
 );
 
 async function runBenchmark() {
@@ -100,6 +106,12 @@ async function runBenchmark() {
       }
     }
 
+    // Apply 2-opt if enabled (after all insertions)
+    let twoOptStats = { iterations: 0, improvements: 0 };
+    if (use2Opt) {
+      twoOptStats = solver.apply2Opt();
+    }
+
     const endTotal = performance.now();
     const finalCost = solver.getCost();
 
@@ -126,16 +138,17 @@ async function runBenchmark() {
   console.table(results);
 
   // Save Markdown Report
-  generateMarkdownReport(results, useOnion, 15); // Pass maxK to report
+  generateMarkdownReport(results, useOnion, 15, use2Opt); // Pass maxK and 2-opt to report
 }
 
-function generateMarkdownReport(results, usedOnion, maxK) {
+function generateMarkdownReport(results, usedOnion, maxK, used2Opt) {
   const mdPath = path.join(process.cwd(), 'benchmark_report.md');
 
   let md = `# Ripple Insertion Benchmark Report\n\n`;
   md += `**Date:** ${new Date().toISOString().split('T')[0]}\n`;
   md += `**Strategy:** ${usedOnion ? 'Onion Peeling' : 'File Order'}\n`;
-  md += `**Neighbors (M):** ${maxK}\n\n`;
+  md += `**Neighbors (M):** ${maxK}\n`;
+  md += `**2-opt:** ${used2Opt ? 'Enabled (50 iterations)' : 'Disabled'}\n\n`;
   md += `| Instance | N | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) | Ripples/Ins |\n`;
   md += `|---|---|---|---|---|---|---|---|\n`;
 
