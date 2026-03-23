@@ -145,8 +145,14 @@ describe('RippleInsertion Algorithm', () => {
       );
 
       // Stats should be returned
-      assert.ok(typeof stats.iterations === 'number', 'Should have iterations count');
-      assert.ok(typeof stats.improvements === 'number', 'Should have improvements count');
+      assert.ok(
+        typeof stats.iterations === 'number',
+        'Should have iterations count'
+      );
+      assert.ok(
+        typeof stats.improvements === 'number',
+        'Should have improvements count'
+      );
     });
 
     it('should return 2-opt stats from apply2Opt', () => {
@@ -159,8 +165,14 @@ describe('RippleInsertion Algorithm', () => {
 
       const stats = solver.apply2Opt();
 
-      assert.ok(typeof stats.iterations === 'number', 'Should have iterations count');
-      assert.ok(typeof stats.improvements === 'number', 'Should have improvements count');
+      assert.ok(
+        typeof stats.iterations === 'number',
+        'Should have iterations count'
+      );
+      assert.ok(
+        typeof stats.improvements === 'number',
+        'Should have improvements count'
+      );
     });
 
     it('should not run 2-opt for tours with less than 4 cities', () => {
