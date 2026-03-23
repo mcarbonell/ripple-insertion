@@ -182,7 +182,8 @@ export class RippleInsertion extends EventTarget {
     super();
     this.edgeWeightType = options.edgeWeightType || 'EUC_2D';
     this.explicitWeights = options.explicitWeights || null;
-    this.maxK = options.maxK || 20; // Number of neighbors to consider
+    this.maxK = options.maxK || 20;
+    this.adaptiveMaxK = options.adaptiveMaxK ?? true;
 
     // 2-opt options
     this.enable2Opt = options.enable2Opt || false;
@@ -293,10 +294,11 @@ export class RippleInsertion extends EventTarget {
 
   _insertAndOptimize(cityId) {
     const city = this.cities[cityId];
+    const currentK = this._getAdaptiveK();
     const nearestNeighbors = this.kdtree.nearestNeighbors(
       city.x,
       city.y,
-      this.maxK
+      currentK
     );
 
     let bestInsertion = { cost: Infinity, afterNode: null };
@@ -511,10 +513,11 @@ export class RippleInsertion extends EventTarget {
       );
 
       const city = this.cities[currentCityId];
+      const currentK = this._getAdaptiveK();
       const spatialNeighbors = this.kdtree.nearestNeighbors(
         city.x,
         city.y,
-        this.maxK
+        currentK
       );
 
       const prevCityId = currentNode.prev.cityId;
@@ -603,5 +606,13 @@ export class RippleInsertion extends EventTarget {
       c += this.dist(this.cities[cityId], this.cities[node.next.cityId]);
     }
     return c;
+  }
+
+  _getAdaptiveK() {
+    if (!this.adaptiveMaxK) {
+      return this.maxK;
+    }
+    const n = this.tour.size;
+    return Math.min(50, Math.max(15, Math.floor(n * 0.2)));
   }
 }

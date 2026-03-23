@@ -40,7 +40,8 @@ import { RippleInsertion } from './src/ripple-insertion.js';
 // 1. Initialize the solver
 const solver = new RippleInsertion({
   edgeWeightType: 'EUC_2D', // Distance metric (EUC_2D, GEO, ATT, CEIL_2D)
-  maxK: 15, // Number of spatial neighbors to check during ripple
+  maxK: 15, // Fixed neighbors (ignored if adaptiveMaxK is true)
+  adaptiveMaxK: true, // Adaptive: scales from 15 to 50 based on N
 });
 
 // 2. Listen to events for visualization (Optional)
@@ -65,7 +66,9 @@ After inserting all cities, you can optionally apply 2-opt local search to furth
 ```javascript
 // Apply 2-opt refinement after all insertions
 const twoOptStats = solver.apply2Opt();
-console.log(`2-opt: ${twoOptStats.improvements} improvements in ${twoOptStats.iterations} iterations`);
+console.log(
+  `2-opt: ${twoOptStats.improvements} improvements in ${twoOptStats.iterations} iterations`
+);
 
 // Get the improved tour and cost
 const optimizedTour = solver.getTour();
@@ -73,11 +76,13 @@ const optimizedCost = solver.getCost();
 ```
 
 **When to use 2-opt:**
+
 - When quality is more important than speed
 - For static or batch scenarios where you can afford extra computation
 - After all cities have been inserted (not during real-time insertion)
 
 **Performance impact:**
+
 - Adds ~10-30% overhead depending on tour size
 - Typically improves gap by 1-3% on standard benchmarks
 - Best for tours with 50+ cities
@@ -110,6 +115,7 @@ Performance on standard TSPLIB instances (EUC*2D).
 | ch150    | 150 | 6528    | 6769     | 3.69%   | 25.6      | 0.136         |
 
 **2-opt improvements:**
+
 - `kroA100`: 0.11% → 0.05% (55% better)
 - `ch130`: 4.94% → 4.29% (13% better)
 - `ch150`: 7.11% → 3.69% (48% better)
