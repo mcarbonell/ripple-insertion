@@ -1,68 +1,93 @@
+// Optimized for KD-Tree nearest neighbor search: Structure of Arrays
 export class FastBinaryHeap {
-  constructor(compare, maxSize) {
-    this.compare = compare;
+  constructor(maxSize) {
     this.maxSize = maxSize;
-    this.heap = [];
+    this.nodes = new Array(maxSize);
+    // Use Float64Array for fast squared distance storage
+    this.sqDistances = new Float64Array(maxSize);
+    this._size = 0;
   }
 
-  push(item) {
-    if (this.heap.length < this.maxSize) {
-      this.heap.push(item);
-      this._bubbleUp(this.heap.length - 1);
-    } else if (this.compare(item, this.heap[0]) < 0) {
-      this.heap[0] = item;
+  push(node, sqDist) {
+    if (this._size < this.maxSize) {
+      this.nodes[this._size] = node;
+      this.sqDistances[this._size] = sqDist;
+      this._bubbleUp(this._size);
+      this._size++;
+    } else if (sqDist < this.sqDistances[0]) {
+      this.nodes[0] = node;
+      this.sqDistances[0] = sqDist;
       this._sinkDown(0);
     }
   }
 
-  peek() {
-    return this.heap[0];
+  peekDistance() {
+    return this._size === 0 ? Infinity : this.sqDistances[0];
   }
 
   size() {
-    return this.heap.length;
+    return this._size;
   }
 
   toArray() {
-    return this.heap;
+    const result = new Array(this._size);
+    for (let i = 0; i < this._size; i++) {
+      result[i] = { node: this.nodes[i], sqDistance: this.sqDistances[i] };
+    }
+    return result;
   }
 
   _bubbleUp(idx) {
-    const item = this.heap[idx];
+    const node = this.nodes[idx];
+    const sqDist = this.sqDistances[idx];
+
     while (idx > 0) {
       const parentIdx = Math.floor((idx - 1) / 2);
-      if (this.compare(item, this.heap[parentIdx]) >= 0) break;
-      this.heap[idx] = this.heap[parentIdx];
+      // Max-heap logic: parent should be LARGER. If new item is smaller, stop bubbling up.
+      if (sqDist <= this.sqDistances[parentIdx]) break;
+
+      this.nodes[idx] = this.nodes[parentIdx];
+      this.sqDistances[idx] = this.sqDistances[parentIdx];
       idx = parentIdx;
     }
-    this.heap[idx] = item;
+    this.nodes[idx] = node;
+    this.sqDistances[idx] = sqDist;
   }
 
   _sinkDown(idx) {
-    const item = this.heap[idx];
-    const len = this.heap.length;
+    const node = this.nodes[idx];
+    const sqDist = this.sqDistances[idx];
+    const len = this._size;
+
     while (true) {
       const leftIdx = 2 * idx + 1;
       const rightIdx = 2 * idx + 2;
       let swapIdx = -1;
 
-      if (leftIdx < len && this.compare(this.heap[leftIdx], item) < 0) {
+      // We want to sink the item down if it's SMALLER than its children.
+      // So we swap with the LARGEST child.
+      if (leftIdx < len && this.sqDistances[leftIdx] > sqDist) {
         swapIdx = leftIdx;
       }
-      if (
-        rightIdx < len &&
-        this.compare(this.heap[rightIdx], item) < 0 &&
-        (swapIdx === -1 ||
-          this.compare(this.heap[rightIdx], this.heap[leftIdx]) < 0)
-      ) {
-        swapIdx = rightIdx;
+
+      if (rightIdx < len) {
+        if (
+          (swapIdx === -1 && this.sqDistances[rightIdx] > sqDist) ||
+          (swapIdx !== -1 &&
+            this.sqDistances[rightIdx] > this.sqDistances[leftIdx])
+        ) {
+          swapIdx = rightIdx;
+        }
       }
 
       if (swapIdx === -1) break;
-      this.heap[idx] = this.heap[swapIdx];
+
+      this.nodes[idx] = this.nodes[swapIdx];
+      this.sqDistances[idx] = this.sqDistances[swapIdx];
       idx = swapIdx;
     }
-    this.heap[idx] = item;
+    this.nodes[idx] = node;
+    this.sqDistances[idx] = sqDist;
   }
 }
 
@@ -147,15 +172,19 @@ export class OptimizedKDTree {
   nearestNeighbors(x, y, k) {
     if (!this.root) return [];
     const point = [x, y];
-    const neighbors = new FastBinaryHeap((a, b) => a.distance - b.distance, k);
+    // Use squared distance for faster comparisons without Math.sqrt
+    const neighbors = new FastBinaryHeap(k);
     this._searchNearest(this.root, point, k, neighbors);
     return neighbors.toArray().map((n) => n.node.data);
   }
 
   _searchNearest(node, point, k, neighbors) {
     if (!node) return;
-    const d = Math.hypot(point[0] - node.point[0], point[1] - node.point[1]);
-    neighbors.push({ node, distance: d });
+    const dx = point[0] - node.point[0];
+    const dy = point[1] - node.point[1];
+    const sqDist = dx * dx + dy * dy;
+
+    neighbors.push(node, sqDist);
 
     const axis = node.axis;
     const diff = point[axis] - node.point[axis];
@@ -164,7 +193,7 @@ export class OptimizedKDTree {
 
     this._searchNearest(nearChild, point, k, neighbors);
 
-    if (neighbors.size() < k || Math.abs(diff) < neighbors.peek().distance) {
+    if (neighbors.size() < k || diff * diff < neighbors.peekDistance()) {
       this._searchNearest(farChild, point, k, neighbors);
     }
   }
