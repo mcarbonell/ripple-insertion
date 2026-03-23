@@ -106,12 +106,25 @@ const stats = solver.removeCity(cityId);
 // Returns: { iterations, maxDepth, removedCost }
 ```
 
-### 7.2 Batch Insertion Support
+### 7.2 Batch Insertion Support ✅
 
-- [ ] Implement `addCities(citiesArray)` method
-- [ ] Integrate convex hull / onion peeling as constructor options (already exist as utils)
-- [ ] Single ripple pass after all insertions
-- [ ] Benchmark vs sequential insertion
+- [x] Implement `addCities(citiesArray, options)` method
+- [x] Integrate convex hull / onion peeling as option
+- [x] Single ripple pass after all insertions (already happens per insertion)
+- [x] Benchmark vs sequential insertion
+
+```javascript
+// Implemented API
+const stats = solver.addCities(
+  [
+    { id: 10, x: 100, y: 200 },
+    { id: 11, x: 150, y: 300 },
+    { id: 12, x: 200, y: 250 },
+  ],
+  { useOnionPeeling: true }
+);
+// Returns: { totalIterations, avgRipplesPerInsert, totalTime }
+```
 
 ```javascript
 // Proposed API

@@ -429,6 +429,45 @@ export class RippleInsertion extends EventTarget {
   }
 
   /**
+   * Adds multiple cities to the tour in optimized order.
+   * @param {Array<{id: number, x: number, y: number}>} cities - Array of cities to add
+   * @param {Object} options - Options for batch insertion
+   * @param {boolean} options.useOnionPeeling - Use convex hull order (default: false)
+   * @returns {{ totalIterations: number, avgRipplesPerInsert: number, totalTime: number }}
+   */
+  addCities(cities, options = {}) {
+    const useOnionPeeling = options.useOnionPeeling ?? false;
+    let insertionOrder = cities.map((c) => c.id);
+
+    if (useOnionPeeling && cities.length > 3) {
+      const points = cities.map((c) => ({ id: c.id, x: c.x, y: c.y }));
+      const layers = onionPeeling(points);
+      insertionOrder = getOnionInsertionOrder(layers);
+    }
+
+    const startTime = performance.now();
+    let totalIterations = 0;
+
+    for (const cityId of insertionOrder) {
+      const city = cities.find((c) => c.id === cityId);
+      if (city) {
+        const result = this.addCity(city.id, city.x, city.y);
+        totalIterations += result.iterations;
+      }
+    }
+
+    const totalTime = performance.now() - startTime;
+    const avgRipplesPerInsert =
+      cities.length > 0 ? totalIterations / cities.length : 0;
+
+    return {
+      totalIterations,
+      avgRipplesPerInsert,
+      totalTime,
+    };
+  }
+
+  /**
    * Applies 2-opt optimization to the entire tour.
    * Should be called after all cities have been added.
    * @returns {{ iterations: number, improvements: number }}

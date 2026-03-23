@@ -103,6 +103,35 @@ const tour = solver.getTour();
 const cost = solver.getCost();
 ```
 
+### Batch Insertion
+
+You can also insert multiple cities at once with optimized insertion order:
+
+```javascript
+// Add multiple cities at once
+const cities = [
+  { id: 10, x: 100, y: 200 },
+  { id: 11, x: 150, y: 300 },
+  { id: 12, x: 200, y: 250 },
+  { id: 13, x: 80, y: 180 },
+];
+
+// Without optimization (uses file order)
+const stats1 = solver.addCities(cities);
+
+// With onion peeling (convex hull first - better quality)
+const stats2 = solver.addCities(cities, { useOnionPeeling: true });
+console.log(
+  `Inserted ${cities.length} cities in ${stats2.totalTime.toFixed(2)}ms`
+);
+```
+
+**Benefits of onion peeling:**
+
+- Inserts cities from outside (convex hull) inward
+- Provides better initial tour structure
+- Reduces total ripple iterations
+
 ## 📊 Benchmarks
 
 Performance on standard TSPLIB instances (EUC*2D).
