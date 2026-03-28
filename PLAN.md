@@ -37,7 +37,6 @@ const solver = new RippleInsertion({
 - 2-opt is applied after each insertion, which can be expensive
 - Consider making it optional only at the end (not after each insertion)
 - The improvement varies by instance - some benefit more than others
-  Vale
 
 ### 6.2 Adaptive M (Neighbors) as Function of N ✅
 
@@ -103,7 +102,7 @@ const solver = new RippleInsertion({
 
 ---
 
-## Phase 7: Functionality Extensions (📋 Pending - Medium Priority)
+## Phase 7: Functionality Extensions (🔄 In Progress - Medium Priority)
 
 ### 7.1 City Removal Support ✅
 
@@ -176,20 +175,6 @@ const solver = RippleInsertion.deserialize(state);
 - [ ] Handle state synchronization
 - [ ] Benchmark UI responsiveness improvement
 
-### 8.2 Spatial Hashing for Dense Regions
-
-- [ ] Implement grid-based spatial hash
-- [ ] Use for neighbor queries in dense clusters
-- [ ] Fallback to KD-Tree for sparse regions
-- [ ] Benchmark with clustered distributions
-
-### 8.3 Typed Arrays for Large Instances (N > 10000)
-
-- [ ] Use Float64Array for coordinates
-- [ ] Optimize distance calculations
-- [ ] Reduce memory footprint
-- [ ] Benchmark memory usage improvement
-
 ---
 
 ## Phase 9: Testing & Validation (📋 Pending - High Priority)
@@ -233,13 +218,6 @@ const solver = RippleInsertion.deserialize(state);
 - [ ] Add TypeScript type definitions (.d.ts)
 - [ ] Create CHANGELOG.md
 - [ ] Publish to npm registry
-
-### 10.3 Academic Contribution
-
-- [ ] Write technical paper describing the algorithm
-- [ ] Include formal complexity analysis
-- [ ] Compare with existing dynamic TSP literature
-- [ ] Submit to optimization conference/journal
 
 ---
 
@@ -367,8 +345,8 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 ### Improvements to Test
 
 - [x] Insert order: convex hull first (currently uses file order)
-- [ ] Adaptive M (neighbors) as function of N
-- [ ] Additional operators beyond Relocate (2-opt, or-opt)
+- [x] Adaptive M (neighbors) as function of N
+- [x] Additional operators beyond Relocate (2-opt, or-opt)
 
 ---
 
@@ -381,8 +359,8 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
   - [x] Benchmark results table
   - [x] Comparison table (vs Nearest Neighbor, Cheapest Insertion, LKH)
   - [x] Use cases (gaming, logistics, interactive UI)
-- [ ] npm publish (optional)
-- [ ] CITATION.cff
+- [ ] npm publish (optional - no urgente)
+- [ ] CITATION.cff (optional - solo si se publica)
 
 ---
 
@@ -403,9 +381,3 @@ This algorithm was originally developed inside the k-alternatives repo as a "bon
 1. Different problem domain (dynamic vs static TSP)
 2. Different target audience (game devs, interactive apps vs researchers)
 3. Deserves its own identity, docs, and versioning
-
-### Pending Additions
-
-- **Ripple convergence metric**: Measure when ripple naturally stops without 2-opt
-- **Integrated convex hull/onion peeling**: Move utilities to constructor options
-- **TypeScript definitions**: Add .d.ts for type safety
