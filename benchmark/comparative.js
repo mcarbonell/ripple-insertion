@@ -170,27 +170,33 @@ function randomInsertionTSP(cities) {
 // --- Ripple Insertion wrappers ---
 
 function rippleInsertionBaseline(cities) {
-  const solver = new RippleInsertion({ adaptiveMaxK: false, maxK: 15 });
+  const solver = new RippleInsertion({
+    adaptiveMaxK: false,
+    maxK: 15,
+    enable2Opt: true,
+    enableOrOpt: true,
+  });
   for (const c of cities) solver.addCity(c.id, c.x, c.y);
+  solver.applyOrOpt();
   return { cost: solver.getCost() };
 }
 
 function rippleInsertionAdaptive(cities) {
-  const solver = new RippleInsertion({ adaptiveMaxK: true });
-  for (const c of cities) solver.addCity(c.id, c.x, c.y);
-  return { cost: solver.getCost() };
-}
-
-function rippleInsertionWith2Opt(cities) {
-  const solver = new RippleInsertion({ enable2Opt: true });
-  for (const c of cities) solver.addCity(c.id, c.x, c.y);
-  return { cost: solver.getCost() };
-}
-
-function rippleInsertionFull(cities) {
-  const solver = new RippleInsertion({ enable2Opt: true, enableOrOpt: true });
+  const solver = new RippleInsertion({
+    enable2Opt: true,
+    enableOrOpt: true,
+  });
   for (const c of cities) solver.addCity(c.id, c.x, c.y);
   solver.applyOrOpt();
+  return { cost: solver.getCost() };
+}
+
+function rippleInsertionNoOpt(cities) {
+  const solver = new RippleInsertion({
+    enable2Opt: false,
+    enableOrOpt: false,
+  });
+  for (const c of cities) solver.addCity(c.id, c.x, c.y);
   return { cost: solver.getCost() };
 }
 
@@ -232,10 +238,9 @@ function runBenchmark() {
         return { cost: best };
       },
     },
-    { name: 'Ripple (M=15)', fn: rippleInsertionBaseline },
-    { name: 'Ripple (adaptive)', fn: rippleInsertionAdaptive },
-    { name: 'Ripple + 2opt', fn: rippleInsertionWith2Opt },
-    { name: 'Ripple + 2opt + oropt', fn: rippleInsertionFull },
+    { name: 'Ripple (M=15, no-opt)', fn: rippleInsertionNoOpt },
+    { name: 'Ripple (M=15, all opts)', fn: rippleInsertionBaseline },
+    { name: 'Ripple (adaptive, all)', fn: rippleInsertionAdaptive },
     { name: 'Ripple + onion + all', fn: rippleInsertionOnion },
   ];
 
