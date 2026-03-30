@@ -1,5 +1,7 @@
 # Ripple Insertion: Dynamic TSP Solver
 
+![Ripple Insertion Hero](img/hero.svg)
+
 [![Node.js CI](https://github.com/mcarbonell/ripple-insertion/actions/workflows/ci.yml/badge.svg)](https://github.com/mcarbonell/ripple-insertion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 

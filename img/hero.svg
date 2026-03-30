@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340" width="800" height="340">
+  <defs>
+    <style>
+      .bg { fill: #0d1117; }
+      .title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 28px; font-weight: 700; fill: #e6edf3; }
+      .subtitle { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px; fill: #8b949e; }
+      .badge { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; fill: #58a6ff; }
+      .edge { stroke: #30363d; stroke-width: 1.5; fill: none; }
+      .edge-active { stroke: #388bfd; stroke-width: 2; fill: none; }
+      .edge-new { stroke: #3fb950; stroke-width: 2; fill: none; }
+      .node { fill: #8b949e; }
+      .node-new { fill: #3fb950; }
+      .node-active { fill: #388bfd; }
+      .ripple { fill: none; stroke: #388bfd; }
+      .label { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 10px; fill: #8b949e; }
+    </style>
+
+    <!-- Glow filter for new node -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-green">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="800" height="340" rx="12"/>
+
+  <!-- Subtle grid -->
+  <g opacity="0.04" stroke="#8b949e" stroke-width="1">
+    <line x1="0" y1="60" x2="800" y2="60"/>
+    <line x1="0" y1="120" x2="800" y2="120"/>
+    <line x1="0" y1="180" x2="800" y2="180"/>
+    <line x1="0" y1="240" x2="800" y2="240"/>
+    <line x1="0" y1="300" x2="800" y2="300"/>
+    <line x1="100" y1="0" x2="100" y2="340"/>
+    <line x1="200" y1="0" x2="200" y2="340"/>
+    <line x1="300" y1="0" x2="300" y2="340"/>
+    <line x1="400" y1="0" x2="400" y2="340"/>
+    <line x1="500" y1="0" x2="500" y2="340"/>
+    <line x1="600" y1="0" x2="600" y2="340"/>
+    <line x1="700" y1="0" x2="700" y2="340"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PHASE 1 (0-1.5s): Static tour, no new node     -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- Tour edges (static, always visible base) -->
+  <!-- Nodes: A(120,200) B(180,100) C(280,80) D(370,130) E(460,90) F(560,150) G(590,240) H(520,290) I(390,270) J(260,260) K(160,290) -->
+  <g class="edge" opacity="1">
+    <animateTransform attributeName="transform" type="translate" values="0,0" dur="0.1s"/>
+    <!-- These edges fade out when new node appears -->
+    <!-- Edge D-E (will be broken) -->
+    <line x1="370" y1="130" x2="460" y2="90" opacity="1">
+      <animate attributeName="opacity" values="1;1;1;0;0;0;0;1;1" keyTimes="0;0.2;0.35;0.4;0.55;0.7;0.85;0.9;1" dur="4s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Permanent edges (never broken) -->
+  <g class="edge">
+    <line x1="120" y1="200" x2="180" y2="100"/>
+    <line x1="180" y1="100" x2="280" y2="80"/>
+    <line x1="280" y1="80" x2="370" y2="130"/>
+    <line x1="460" y1="90" x2="560" y2="150"/>
+    <line x1="560" y1="150" x2="590" y2="240"/>
+    <line x1="590" y1="240" x2="520" y2="290"/>
+    <line x1="520" y1="290" x2="390" y2="270"/>
+    <line x1="390" y1="270" x2="260" y2="260"/>
+    <line x1="260" y1="260" x2="160" y2="290"/>
+    <line x1="160" y1="290" x2="120" y2="200"/>
+  </g>
+
+  <!-- New edges after insertion (D-NEW and NEW-E) -->
+  <g class="edge-new" opacity="0">
+    <animate attributeName="opacity" values="0;0;0;0;1;1;1;0;0" keyTimes="0;0.35;0.38;0.42;0.47;0.7;0.85;0.9;1" dur="4s" repeatCount="indefinite"/>
+    <line x1="370" y1="130" x2="415" y2="170"/>
+    <line x1="415" y1="170" x2="460" y2="90"/>
+  </g>
+
+  <!-- Ripple edges (nodes that "move" - highlight D and E) -->
+  <g class="edge-active" opacity="0">
+    <animate attributeName="opacity" values="0;0;0;0;0;0.8;0.8;0;0" keyTimes="0;0.42;0.45;0.5;0.55;0.6;0.75;0.85;1" dur="4s" repeatCount="indefinite"/>
+    <line x1="280" y1="80" x2="370" y2="130"/>
+    <line x1="460" y1="90" x2="560" y2="150"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- NODES                                           -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- Static nodes (always visible) -->
+  <g class="node">
+    <circle cx="120" cy="200" r="5"/>
+    <circle cx="180" cy="100" r="5"/>
+    <circle cx="280" cy="80" r="5"/>
+    <circle cx="460" cy="90" r="5"/>
+    <circle cx="560" cy="150" r="5"/>
+    <circle cx="590" cy="240" r="5"/>
+    <circle cx="520" cy="290" r="5"/>
+    <circle cx="390" cy="270" r="5"/>
+    <circle cx="260" cy="260" r="5"/>
+    <circle cx="160" cy="290" r="5"/>
+  </g>
+
+  <!-- Node D (highlighted during ripple) -->
+  <circle cx="370" cy="130" r="5" fill="#8b949e">
+    <animate attributeName="fill" values="#8b949e;#8b949e;#8b949e;#8b949e;#8b949e;#388bfd;#388bfd;#8b949e;#8b949e" keyTimes="0;0.42;0.45;0.5;0.55;0.6;0.75;0.85;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="5;5;5;5;5;6;6;5;5" keyTimes="0;0.42;0.45;0.5;0.55;0.6;0.75;0.85;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Node E (highlighted during ripple) -->
+  <circle cx="460" cy="90" r="5" fill="#8b949e">
+    <animate attributeName="fill" values="#8b949e;#8b949e;#8b949e;#8b949e;#8b949e;#388bfd;#388bfd;#8b949e;#8b949e" keyTimes="0;0.47;0.5;0.55;0.6;0.65;0.78;0.85;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="5;5;5;5;5;6;6;5;5" keyTimes="0;0.47;0.5;0.55;0.6;0.65;0.78;0.85;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- NEW NODE (appears at 0.38, fades at 0.88) -->
+  <circle cx="415" cy="170" r="0" class="node-new" filter="url(#glow-green)">
+    <animate attributeName="r" values="0;0;0;8;6;6;6;6;0;0" keyTimes="0;0.3;0.37;0.42;0.47;0.6;0.75;0.85;0.9;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;0;1;1;1;1;1;0;0" keyTimes="0;0.3;0.37;0.42;0.47;0.6;0.75;0.85;0.9;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- RIPPLE WAVES                                    -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- Wave 1 (from new node) -->
+  <circle cx="415" cy="170" r="10" class="ripple" stroke-width="2" opacity="0">
+    <animate attributeName="r" values="10;10;10;10;60;60" keyTimes="0;0.42;0.44;0.46;0.62;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;0;0.7;0;0" keyTimes="0;0.42;0.44;0.46;0.62;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="2;2;2;2;0.5;0.5" keyTimes="0;0.42;0.44;0.46;0.62;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Wave 2 (delayed) -->
+  <circle cx="415" cy="170" r="10" class="ripple" stroke-width="2" opacity="0">
+    <animate attributeName="r" values="10;10;10;10;80;80" keyTimes="0;0.48;0.5;0.52;0.72;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;0;0.5;0;0" keyTimes="0;0.48;0.5;0.52;0.72;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="2;2;2;1.5;0.3;0.3" keyTimes="0;0.48;0.5;0.52;0.72;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Wave 3 (more delayed) -->
+  <circle cx="415" cy="170" r="10" class="ripple" stroke-width="1.5" opacity="0">
+    <animate attributeName="r" values="10;10;10;10;110;110" keyTimes="0;0.54;0.56;0.58;0.82;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;0;0.3;0;0" keyTimes="0;0.54;0.56;0.58;0.82;1" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="1.5;1.5;1.5;1;0.2;0.2" keyTimes="0;0.54;0.56;0.58;0.82;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TEXT PANEL (right side)                         -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <text x="680" y="110" class="title" text-anchor="middle">🌊</text>
+  <text x="680" y="148" class="title" text-anchor="middle" font-size="22">Ripple</text>
+  <text x="680" y="174" class="title" text-anchor="middle" font-size="22">Insertion</text>
+  <text x="680" y="198" class="subtitle" text-anchor="middle">Dynamic TSP Solver</text>
+
+  <!-- Badges -->
+  <rect x="618" y="214" width="124" height="20" rx="4" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="680" y="228" class="badge" text-anchor="middle">O(N log N)</text>
+
+  <rect x="618" y="240" width="124" height="20" rx="4" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="680" y="254" class="badge" text-anchor="middle" fill="#3fb950">Zero Dependencies</text>
+
+  <rect x="618" y="266" width="124" height="20" rx="4" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="680" y="280" class="badge" text-anchor="middle" fill="#d2a8ff">Event-Driven</text>
+
+  <!-- Step labels (appear/disappear with animation) -->
+  <!-- Label: "Inserting..." -->
+  <text x="415" y="155" class="label" text-anchor="middle" opacity="0">
+    <animate attributeName="opacity" values="0;0;0;1;1;0;0;0;0" keyTimes="0;0.36;0.38;0.42;0.48;0.52;0.7;0.9;1" dur="4s" repeatCount="indefinite"/>
+    inserting...
+  </text>
+
+  <!-- Label: "Ripple propagating" -->
+  <text x="415" y="310" class="label" text-anchor="middle" fill="#388bfd" opacity="0">
+    <animate attributeName="opacity" values="0;0;0;0;0;1;1;0;0" keyTimes="0;0.44;0.48;0.52;0.56;0.6;0.78;0.85;1" dur="4s" repeatCount="indefinite"/>
+    ripple propagating...
+  </text>
+
+  <!-- Label: "Tour stabilized ✓" -->
+  <text x="415" y="310" class="label" text-anchor="middle" fill="#3fb950" opacity="0">
+    <animate attributeName="opacity" values="0;0;0;0;0;0;0;1;1;0" keyTimes="0;0.44;0.55;0.65;0.72;0.78;0.82;0.86;0.92;1" dur="4s" repeatCount="indefinite"/>
+    tour stabilized ✓
+  </text>
+
+  <!-- Bottom border accent -->
+  <rect x="0" y="336" width="800" height="4" rx="0" fill="url(#accentGrad)"/>
+  <defs>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#388bfd"/>
+      <stop offset="50%" stop-color="#3fb950"/>
+      <stop offset="100%" stop-color="#d2a8ff"/>
+    </linearGradient>
+  </defs>
+</svg>
