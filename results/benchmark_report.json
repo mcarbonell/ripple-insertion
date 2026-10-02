@@ -6,8 +6,8 @@
     "Optimal": 426,
     "Achieved": 444,
     "Gap (%)": "4.23%",
-    "Time (ms)": "7.4",
-    "Time/Ins (ms)": "0.143",
+    "Time (ms)": "6.1",
+    "Time/Ins (ms)": "0.117",
     "Ripples/Ins": "16.1"
   },
   {
@@ -17,8 +17,8 @@
     "Optimal": 7542,
     "Achieved": 7783,
     "Gap (%)": "3.20%",
-    "Time (ms)": "16.1",
-    "Time/Ins (ms)": "0.288",
+    "Time (ms)": "14.8",
+    "Time/Ins (ms)": "0.265",
     "Ripples/Ins": "16.3"
   },
   {
@@ -28,8 +28,8 @@
     "Optimal": 675,
     "Achieved": 691,
     "Gap (%)": "2.37%",
-    "Time (ms)": "6.1",
-    "Time/Ins (ms)": "0.083",
+    "Time (ms)": "8.6",
+    "Time/Ins (ms)": "0.119",
     "Ripples/Ins": "17.9"
   },
   {
@@ -39,8 +39,8 @@
     "Optimal": 21282,
     "Achieved": 21292,
     "Gap (%)": "0.05%",
-    "Time (ms)": "13.5",
-    "Time/Ins (ms)": "0.128",
+    "Time (ms)": "16.0",
+    "Time/Ins (ms)": "0.154",
     "Ripples/Ins": "20.3"
   },
   {
@@ -50,8 +50,8 @@
     "Optimal": 6110,
     "Achieved": 6372,
     "Gap (%)": "4.29%",
-    "Time (ms)": "32.0",
-    "Time/Ins (ms)": "0.232",
+    "Time (ms)": "28.3",
+    "Time/Ins (ms)": "0.207",
     "Ripples/Ins": "21.7"
   },
   {
@@ -61,7 +61,7 @@
     "Optimal": 6528,
     "Achieved": 6691,
     "Gap (%)": "2.50%",
-    "Time (ms)": "24.9",
+    "Time (ms)": "27.5",
     "Time/Ins (ms)": "0.158",
     "Ripples/Ins": "22.9"
   }

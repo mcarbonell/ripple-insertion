@@ -353,36 +353,36 @@ El plan está ordenado en fases con **dependencias**: no tiene sentido medir (Fa
 
 ### Fase 0 — Higiene inmediata (½ día)
 
-- [ ] Eliminar el worktree `.kilo/worktrees/sincere-pudding/`.
-- [ ] Añadir `.prettierignore` con `node_modules/`, `dist/`, `*.md` (decidir), `.kilo/`.
-- [ ] Cambiar `package.json` scripts: `test` = `node --test`; `format` = `prettier --write src test benchmark demo`; `format:check` = `prettier --check src test benchmark demo`.
-- [ ] CI: usar `npm run format:check` (no `format`).
-- [ ] Añadir `LICENSE` (MIT) y `CITATION.cff`.
-- [ ] `package.json`: añadir `exports`, `main`, `files`, `engines` (`>=18`), y unificar versión.
-- [ ] Decidir el destino de `src/ripple-insertion-v2.js`: integrarlo, moverlo a `experimental/`, o eliminarlo.
+- [x] Eliminar el worktree `.kilo/worktrees/sincere-pudding/`.
+- [x] Añadir `.prettierignore` con `node_modules/`, `dist/`, `*.md` (decidir), `.kilo/`.
+- [x] Cambiar `package.json` scripts: `test` = `node --test`; `format` = `prettier --write src test benchmark demo scripts`; `format:check` = `prettier --check src test benchmark demo scripts`.
+- [x] CI: usar `npm run format:check` (no `format`).
+- [x] Añadir `LICENSE` (MIT) y `CITATION.cff`.
+- [x] `package.json`: añadir `exports`, `main`, `files`, `engines` (`>=18`), y unificar versión.
+- [x] Decidir el destino de `src/ripple-insertion-v2.js`: integrarlo, moverlo a `experimental/`, o eliminarlo.
 
 **Criterio de aceptación:** CI verde, `format:check` falla si el código no está formateado, y `npm test` no modifica ficheros.
 
 ### Fase 1 — Corrección de bugs y contrato de API (2-3 días)
 
-- [ ] **C2:** arreglar `removeCity()` para pasar objetos ciudad a `dist()`; test de regresión que valide `removedCost` finito y consistente con `getCost()`.
-- [ ] **C1:** decidir el contrato de `enable2Opt`/`enableOrOpt`. Recomendado: eliminarlos y exponer solo `apply2Opt()`/`applyOrOpt()` como post-proceso documentado. Si se opta por "durante inserción", implementarlo y testear que mejora el coste cuando debe.
-- [ ] **A1:** renombrar `maxDepth`→`iterations`, o implementar profundidad real por generaciones.
-- [ ] **A2:** reemplazar `cities.find` por un `Map` en `addCities()`.
-- [ ] **A4:** eliminar `_twoOptApplied` y usar `maxOrOptIterations` de verdad (o eliminar la propiedad).
-- [ ] **M2:** eliminar el re-enlazado manual del 3º nodo (redundante).
-- [ ] **M3:** lanzar error (no fallback silencioso) si faltan pesos `EXPLICIT`.
-- [ ] **M8:** validación de entrada (ids duplicados, coordenadas no finitas, ids no enteros).
+- [x] **C2:** arreglar `removeCity()` para pasar objetos ciudad a `dist()`; test de regresión que valide `removedCost` finito y consistente con `getCost()`.
+- [x] **C1:** decidir el contrato de `enable2Opt`/`enableOrOpt`. Recomendado: eliminarlos y exponer solo `apply2Opt()`/`applyOrOpt()` como post-proceso documentado. Si se opta por "durante inserción", implementarlo y testear que mejora el coste cuando debe.
+- [x] **A1:** renombrar `maxDepth`→`iterations`, o implementar profundidad real por generaciones.
+- [x] **A2:** reemplazar `cities.find` por un `Map` en `addCities()`.
+- [x] **A4:** eliminar `_twoOptApplied` y usar `maxOrOptIterations` de verdad (o eliminar la propiedad).
+- [x] **M2:** eliminar el re-enlazado manual del 3º nodo (redundante).
+- [x] **M3:** lanzar error (no fallback silencioso) si faltan pesos `EXPLICIT`.
+- [x] **M8:** validación de entrada (ids duplicados, coordenadas no finitas, ids no enteros).
 
 **Criterio de aceptación:** cada bug tiene test de regresión; suite en verde; `enable*` o funciona o no existe.
 
 ### Fase 2 — Repositorio mínimo reproducible (2-3 días)
 
-- [ ] Añadir semillas fijas y generador determinista en `comparative.js`/`stress.js`.
-- [ ] Añadir `scripts/` con un runner único que produzca artefactos crudos en `results/` (CSV/JSON) + reporte markdown generado.
-- [ ] **C4:** corregir el benchmark EXPLICIT: (a) k-NN por peso desde la matriz, o (b) excluirlos explícitamente. Nunca usar coordenadas sintéticas para indexar.
-- [ ] Corregir el reporte para que muestre la configuración real (p. ej. `adaptiveMaxK` vs `M`).
-- [ ] Añadir regresión de "dimensionalidad": comparar resultados con los publicados y fijarlos como _golden values_ (tolerancia 0).
+- [x] Añadir semillas fijas y generador determinista en `comparative.js`/`stress.js`.
+- [x] Añadir `scripts/` con un runner único que produzca artefactos crudos en `results/` (CSV/JSON) + reporte markdown generado.
+- [x] **C4:** corregir el benchmark EXPLICIT: (a) k-NN por peso desde la matriz, o (b) excluirlos explícitamente. Nunca usar coordenadas sintéticas para indexar.
+- [x] Corregir el reporte para que muestre la configuración real (p. ej. `adaptiveMaxK` vs `M`).
+- [x] Añadir regresión de "dimensionalidad": comparar resultados con los publicados y fijarlos como _golden values_ (tolerancia 0).
 
 **Criterio de aceptación:** `node scripts/run-benchmarks.js --seed 42` reproduce los números de forma determinista en dos máquinas distintas (con tolerancia de tiempo).
 
@@ -414,13 +414,13 @@ El plan está ordenado en fases con **dependencias**: no tiene sentido medir (Fa
 
 ### Fase 5 — Documentación del repositorio (1-2 días)
 
-- [ ] Reescribir `README.md` sin claims no probados; corregir tablas; tabla canónica de eventos y opciones.
-- [ ] Fusionar `docs/RIPPLE_INSERTION.md` con el README o convertirlo en la "nota técnica" (con los números finales).
-- [ ] Podar la sección off-topic de `OPTIMIZATIONS.md`; convertirla en "notas de diseño" honestas.
-- [ ] Actualizar `PLAN.md` (fases ordenadas, estado real) o migrar a GitHub Issues/Projects.
-- [ ] Actualizar/eliminar `GEMINI.md`.
-- [ ] Mover `docs/private/` fuera del repo (o borrarlo). No debe estar en el artifact público.
-- [ ] Corregir la errata LKH (≠ Simulated Annealing) en todos los documentos.
+- [x] Reescribir `README.md` sin claims no probados; corregir tablas; tabla canónica de eventos y opciones.
+- [x] Fusionar `docs/RIPPLE_INSERTION.md` con el README o convertirlo en la "nota técnica" (con los números finales).
+- [x] Podar la sección off-topic de `OPTIMIZATIONS.md`; convertirla en "notas de diseño" honestas.
+- [x] Actualizar `PLAN.md` (fases ordenadas, estado real) o migrar a GitHub Issues/Projects.
+- [x] Actualizar/eliminar `GEMINI.md`.
+- [x] Mover `docs/private/` fuera del repo (o borrarlo). No debe estar en el artifact público.
+- [x] Corregir la errata LKH (≠ Simulated Annealing) en todos los documentos.
 
 **Criterio de aceptación:** ningún documento afirma algo que el código no haga; todas las tablas provienen de una única fuente generada por script.
 
