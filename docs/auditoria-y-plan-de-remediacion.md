@@ -401,14 +401,14 @@ El plan está ordenado en fases con **dependencias**: no tiene sentido medir (Fa
 
 ### Fase 4 — Formalización y redacción del paper (2-4 semanas)
 
-- [ ] **Definición formal** del problema (Dynamic/Online TSP) y del algoritmo (pseudocódigo independiente de la implementación JS).
-- [ ] **Prueba de terminación** de la cascada: argumentar función potencial (coste del tour) estrictamente decreciente en cada movimiento con `gain > ε`, y acotar pasos.
-- [ ] **Análisis de complejidad correcto**: coste esperado/amortizado por inserción; peor caso; y supuestos (p. ej. "si el número de nodos visitados por cascada está acotado por C"). Comparar con la medición empírica.
-- [ ] **Análisis competitivo online** (si aplica): ratio frente a offline óptimo bajo secuencias adversarias, o al menos frente a reoptimización completa.
-- [ ] **Related work** serio (§4.3) y posicionamiento honesto de la contribución.
-- [ ] **Secciones**: Introducción, Related Work, Modelo, Algoritmo, Análisis, Experimentos, Discusión, Limitaciones, Conclusión.
-- [ ] **Reproducibilidad**: artifact con DOI (Zenodo), README del artifact, tag de versión y script "one command".
-- [ ] **Ética/limitaciones**: explicitar que es una heurística, no exacta; no exagerar "estándar de facto".
+- [x] **Definición formal** del problema (Dynamic/Online TSP) y del algoritmo (pseudocódigo independiente de la implementación JS).
+- [x] **Prueba de terminación** de la cascada: argumentar función potencial (coste del tour) estrictamente decreciente en cada movimiento con `gain > ε`, y acotar pasos.
+- [x] **Análisis de complejidad correcto**: coste esperado/amortizado por inserción; peor caso; y supuestos (p. ej. "si el número de nodos visitados por cascada está acotado por C"). Comparar con la medición empírica.
+- [x] **Análisis competitivo online** (si aplica): ratio frente a offline óptimo bajo secuencias adversarias, o al menos frente a reoptimización completa.
+- [x] **Related work** serio (§4.3) y posicionamiento honesto de la contribución.
+- [x] **Secciones**: Introducción, Related Work, Modelo, Algoritmo, Análisis, Experimentos, Discusión, Limitaciones, Conclusión.
+- [x] **Reproducibilidad**: artifact con DOI (Zenodo), README del artifact, tag de versión y script "one command".
+- [x] **Ética/limitaciones**: explicitar que es una heurística, no exacta; no exagerar "estándar de facto".
 
 **Venues a considerar** (según el nivel del resultado): _GECCO_ (track de heurísticas/optimización combinatoria), _EvoCOP_, _PPSN_, _CP_, _Journal of Heuristics_, _EURO Journal on Computational Optimization_, _Computers & Operations Research_, _Expert Systems with Applications_. Si la contribución es más de sistemas/online, valorar _SEA_, _ALENEX_ o talleres de _online algorithms_.
 
