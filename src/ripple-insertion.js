@@ -184,6 +184,7 @@ export class RippleInsertion extends EventTarget {
     this.explicitWeights = options.explicitWeights || null;
     this.maxK = options.maxK || 20;
     this.adaptiveMaxK = options.adaptiveMaxK ?? true;
+    this.enableRipple = options.enableRipple ?? true;
 
     // Post-processing options
     this.max2OptIterations = options.max2OptIterations || 50;
@@ -360,6 +361,13 @@ export class RippleInsertion extends EventTarget {
     this.dispatchEvent(new SafeCustomEvent('inserted', { detail: { cityId } }));
 
     // 2. Cascade Optimization
+    if (!this.enableRipple) {
+      this.dispatchEvent(
+        new SafeCustomEvent('tourUpdated', { detail: { id: cityId } })
+      );
+      return { iterations: 0, maxDepth: 0, relocatedCount: 0 };
+    }
+
     const startNodes = this.setPool.acquire();
     startNodes.add(cityId);
     startNodes.add(bestInsertion.afterNode.cityId);
@@ -417,6 +425,15 @@ export class RippleInsertion extends EventTarget {
     this.kdtree.remove(cityId);
 
     if (this.tour.size < 3) {
+      this.dispatchEvent(
+        new SafeCustomEvent('tourUpdated', {
+          detail: { id: cityId, removed: true },
+        })
+      );
+      return { iterations: 0, maxDepth: 0, relocatedCount: 0, removedCost };
+    }
+
+    if (!this.enableRipple) {
       this.dispatchEvent(
         new SafeCustomEvent('tourUpdated', {
           detail: { id: cityId, removed: true },

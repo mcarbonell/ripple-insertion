@@ -388,14 +388,14 @@ El plan está ordenado en fases con **dependencias**: no tiene sentido medir (Fa
 
 ### Fase 3 — Batería experimental para el paper (1-2 semanas)
 
-- [ ] Conjuntos: TSPLIB estándar (EUC_2D, EXPLICIT corregido, GEO, ATT) + instancias generadas con semilla (uniforme, agrupada, espiral) con N de 50 a 10 000.
-- [ ] **Escenario dinámico**: partir de una ruta base y medir (i) coste incremental, (ii) latencia por inserción (p50/p95/p99), (iii) ratio frente a reoptimización completa (Cheapest Insertion, LKH-3) y frente a "no reoptimizar".
-- [ ] Baselines: Nearest Neighbor dinámico, Cheapest Insertion, Cheapest Insertion + 2-opt, Or-opt local, **LKH-3** (estático), y un solver online de referencia.
-- [ ] **Ablación**: ripple ON/OFF; `M` fijo vs adaptativo; 2-opt; Or-opt; onion peeling vs orden de fichero.
-- [ ] **Estudio de escalado** para validar empíricamente la complejidad (tiempo vs N en log-log) y compararlo con el modelo teórico corregido.
-- [ ] **Sensibilidad a M**: curvas gap-vs-M y tiempo-vs-M.
-- [ ] Estadística: ≥ 10 repeticiones, mediana, IQR, test de Wilcoxon frente a baselines.
-- [ ] Registrar hardware, versión de Node, fecha, commit hash.
+- [x] Conjuntos: TSPLIB estándar (EUC_2D, EXPLICIT corregido, GEO, ATT) + instancias generadas con semilla (uniforme, agrupada, espiral) con N de 50 a 10 000.
+- [x] **Escenario dinámico**: partir de una ruta base y medir (i) coste incremental, (ii) latencia por inserción (p50/p95/p99), (iii) ratio frente a reoptimización completa (Cheapest Insertion, LKH-3) y frente a "no reoptimizar".
+- [x] Baselines: Nearest Neighbor dinámico, Cheapest Insertion, Cheapest Insertion + 2-opt, Or-opt local, **LKH-3** (estático), y un solver online de referencia.
+- [x] **Ablación**: ripple ON/OFF; `M` fijo vs adaptativo; 2-opt; Or-opt; onion peeling vs orden de fichero.
+- [x] **Estudio de escalado** para validar empíricamente la complejidad (tiempo vs N en log-log) y compararlo con el modelo teórico corregido.
+- [x] **Sensibilidad a M**: curvas gap-vs-M y tiempo-vs-M.
+- [x] Estadística: ≥ 10 repeticiones, mediana, IQR, test de Wilcoxon frente a baselines.
+- [x] Registrar hardware, versión de Node, fecha, commit hash.
 
 **Criterio de aceptación:** todos los resultados replicables; figuras y tablas generadas por script; complejidad empírica documentada.
 

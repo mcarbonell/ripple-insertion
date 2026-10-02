@@ -21,6 +21,7 @@
   "scripts": {
     "test": "node --test",
     "benchmark": "node scripts/run-benchmarks.js",
+    "experiment": "node benchmark/experimental-battery.js",
     "format": "prettier --write src test benchmark demo scripts",
     "format:check": "prettier --check src test benchmark demo scripts"
   },
