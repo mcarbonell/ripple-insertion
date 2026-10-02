@@ -15,11 +15,11 @@ Imagine the route as a tight elastic band stretched around nails (cities). When 
 
 ## ✨ Features
 
-- **O(N log N) Complexity:** Scales almost linearly, making it capable of handling real-time interactions with thousands of nodes without UI lag.
-- **Zero Dependencies:** Pure JavaScript implementation.
-- **Event-Driven:** Emits `inserted` and `rippleStep` events natively via `EventTarget`, perfect for visualizations.
-- **Optimized Data Structures:** Uses a self-balancing KD-Tree for O(log N) spatial nearest-neighbor queries and a Doubly Linked Tour for O(1) node operations.
-- **2-opt Post-Processing:** Optional local search refinement that can further improve tour quality after all cities are inserted.
+- **Real-Time Responsive:** Spatial index ($O(M \log N)$ per insertion) with localized cascading wave relocation, avoiding global recalculation.
+- **Zero Dependencies:** Pure JavaScript implementation (ES Modules).
+- **Event-Driven:** Emits `inserted`, `rippleStep`, and `tourUpdated` events natively via `EventTarget`, ideal for visualizations.
+- **Optimized Data Structures:** Uses a self-balancing KD-Tree for spatial nearest-neighbor queries and a Doubly Linked Tour with Map indexing for $O(1)$ operations.
+- **Post-Processing Refinement:** Optional 2-opt and Or-opt operators to refine tours after batch insertion.
 
 ## 🎯 Use Cases
 
@@ -42,13 +42,13 @@ import { RippleInsertion } from './src/ripple-insertion.js';
 // 1. Initialize the solver
 const solver = new RippleInsertion({
   edgeWeightType: 'EUC_2D', // Distance metric (EUC_2D, GEO, ATT, CEIL_2D)
-  maxK: 15, // Fixed neighbors (ignored if adaptiveMaxK is true)
-  adaptiveMaxK: true, // Adaptive: scales from 15 to 50 based on N
+  maxK: 20, // Base nearest neighbors
+  adaptiveMaxK: true, // Adaptive: scales M = max(maxK, floor(4 * log2(N)))
 });
 
 // 2. Listen to events for visualization (Optional)
 solver.on('tourUpdated', (e) => {
-  console.log(`Tour updated after inserting city ${e.detail.id}`);
+  console.log(`Tour updated:`, e.detail);
 });
 
 // 3. Add cities dynamically
@@ -144,12 +144,6 @@ const twoOptStats = solver.apply2Opt();
 
 // Apply Or-opt optimization
 const orOptStats = solver.applyOrOpt();
-
-// Or enable both during solver initialization
-const solver = new RippleInsertion({
-  enable2Opt: true,
-  enableOrOpt: true,
-});
 ```
 
 **Operator effects:**
@@ -160,75 +154,47 @@ const solver = new RippleInsertion({
 
 ## 📊 Benchmarks
 
-Performance on standard TSPLIB instances (EUC*2D).
-\_Gap is compared against the known optimal static solution. The focus of this algorithm is speed per insertion, not finding the absolute static minimum.*
+Performance on standard TSPLIB instances (`EUC_2D`) with post-processing (reproduced with `npm run benchmark`):
+_Gap is compared against the known optimal static solution. The primary strength of Ripple Insertion is real-time dynamic insertion without global recalculation._
 
-#### Without post-processing (Real-time insertion)
+| Instance | N | Type | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) | Ripples/Ins |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **eil51** | 51 | EUC_2D | 426 | 444 | 4.23% | 4.3 | 0.081 | 16.1 |
+| **berlin52** | 52 | EUC_2D | 7542 | 7783 | 3.20% | 15.3 | 0.271 | 16.3 |
+| **st70** | 70 | EUC_2D | 675 | 691 | 2.37% | 7.8 | 0.104 | 17.9 |
+| **kroA100** | 100 | EUC_2D | 21282 | 21292 | 0.05% | 12.9 | 0.123 | 20.3 |
+| **ch130** | 130 | EUC_2D | 6110 | 6372 | 4.29% | 29.5 | 0.216 | 21.7 |
+| **ch150** | 150 | EUC_2D | 6528 | 6691 | 2.50% | 25.8 | 0.164 | 22.9 |
 
-| Instance | N   | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
-| -------- | --- | ------- | -------- | ------- | --------- | ------------- |
-| berlin52 | 52  | 7542    | 7783     | 3.20%   | 12.3      | 0.236         |
-| eil51    | 51  | 426     | 448      | 5.16%   | 4.2       | 0.081         |
-| st70     | 70  | 675     | 703      | 4.15%   | 4.1       | 0.058         |
-| kroA100  | 100 | 21282   | 21305    | 0.11%   | 7.2       | 0.072         |
-| ch130    | 130 | 6110    | 6412     | 4.94%   | 19.3      | 0.148         |
-| ch150    | 150 | 6528    | 6774     | 3.77%   | 20.6      | 0.137         |
-
-#### With 2-opt (Post-processing)
-
-| Instance | N   | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
-| -------- | --- | ------- | -------- | ------- | --------- | ------------- |
-| berlin52 | 52  | 7542    | 7783     | 3.20%   | 15.8      | 0.294         |
-| eil51    | 51  | 426     | 448      | 5.16%   | 5.2       | 0.098         |
-| st70     | 70  | 675     | 703      | 4.15%   | 6.5       | 0.089         |
-| kroA100  | 100 | 21282   | 21292    | 0.05%   | 9.5       | 0.082         |
-| ch130    | 130 | 6110    | 6372     | 4.29%   | 34.4      | 0.210         |
-| ch150    | 150 | 6528    | 6688     | 2.45%   | 33.1      | 0.181         |
-
-#### With 2-opt + Or-opt (Best quality)
-
-| Instance | N    | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) |
-| -------- | ---- | ------- | -------- | ------- | --------- | ------------- |
-| berlin52 | 52   | 7542    | 7783     | 3.20%   | 3.0       | 0.054         |
-| ch150    | 150  | 6528    | 6676     | 2.27%   | 16.7      | 0.084         |
-| a280     | 280  | 2579    | 2818     | 9.27%   | 107.5     | 0.303         |
-| pcb1173  | 1173 | 56892   | 61578    | 8.24%   | 1503.9    | 0.566         |
-| d2103    | 2103 | 80450   | 91030    | 13.15%  | 4477.7    | 0.670         |
-| fnl4461  | 4461 | 182566  | 199663   | 9.36%   | 16083.3   | 0.748         |
-| rl5934   | 5934 | 556045  | 618293   | 11.19%  | 46092.2   | 0.772         |
-
-**Improvements over time:**
-
-| Optimization | ch150 | kroA100 |
-| :----------- | :---- | :------ |
-| Baseline     | 7.11% | 0.11%   |
-| + Adaptive M | 3.77% | 0.11%   |
-| + 2-opt      | 2.45% | 0.05%   |
-| + Or-opt     | 2.27% | 0.05%   |
-
-**Best improvement:** ch150: 7.11% → 2.27% (68% better)
+> Raw reproducible JSON and CSV artifacts are generated in `results/benchmark_report.json` and `results/benchmark_report.csv`.
 
 ### Comparison with other heuristics
 
-| Algorithm                     | Complexity     | Best for...               | Typical Gap (N=100) | Dynamic? |
-| :---------------------------- | :------------- | :------------------------ | :------------------ | :------- |
-| **Nearest Neighbor**          | O(N²)          | Extreme speed             | 5-15%               | ❌       |
-| **Cheapest Insertion**        | O(N²)          | Decent quality            | 4-8%                | ❌       |
-| **LKH (Simulated Annealing)** | O(N²)          | **Best quality (static)** | 0.5-2%              | ❌       |
-| **👉 Ripple Insertion**       | **O(N log N)** | **Dynamic + Interactive** | **~4%**             | ✅✅✅   |
+| Algorithm | Complexity | Best for... | Typical Gap (N=100) | Dynamic? |
+| :--- | :--- | :--- | :--- | :--- |
+| **Nearest Neighbor** | O(N²) | Extreme speed | 15-30% | ❌ |
+| **Cheapest Insertion** | O(N²) | Baseline construction | 10-20% | ❌ |
+| **LKH-3 (Lin-Kernighan-Helsgaun)** | O(N²)-O(N³.²) | **Best quality (offline static)** | 0.0-0.5% | ❌ |
+| **👉 Ripple Insertion** | Sub-quadratic | **Dynamic + Interactive Real-Time** | **~2-4%** | ✅✅✅ |
 
 ## 🛠️ Development
 
-Run the internal benchmarks:
-
-```bash
-node benchmark/benchmark.js
-```
-
-Run tests (uses native Node.js test runner):
+Run the test suite:
 
 ```bash
 npm test
+```
+
+Run benchmarks and produce reproducibility artifacts:
+
+```bash
+npm run benchmark
+```
+
+Check code formatting:
+
+```bash
+npm run format:check
 ```
 
 ## 📜 License

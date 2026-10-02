@@ -9,18 +9,19 @@
 
 ### 6.1 Add 2-opt Post-Processing Operator
 
-- [x] Implement optional 2-opt local search after each insertion
-- [x] Add `enable2Opt: true` option to constructor
-- [x] Limit 2-opt iterations to maintain real-time performance
+- [x] Implement optional 2-opt local search post-processing (`apply2Opt()`)
+- [x] Expose `max2OptIterations` option (default: 50)
+- [x] Limit 2-opt iterations to maintain interactive performance
 - [x] Benchmark quality improvement vs performance cost
 
 ```javascript
 // Implemented API
 const solver = new RippleInsertion({
-  maxK: 15,
-  enable2Opt: true, // Enable 2-opt refinement
-  max2OptIterations: 50, // Limit iterations per insertion
+  maxK: 20,
+  max2OptIterations: 50,
 });
+// ... add cities ...
+const twoOptStats = solver.apply2Opt();
 ```
 
 **Actual Impact:**
@@ -350,17 +351,23 @@ Use **Node.js Native Test Runner (`node:test`)** to maintain the zero-dependency
 
 ---
 
+---
+
 ## Phase 5: Documentation & Publish (✅ Completed)
 
-- [x] README.md with:
-  - [x] What is Dynamic TSP
-  - [x] Algorithm explanation (elastic band analogy)
-  - [x] Quick start / usage
-  - [x] Benchmark results table
-  - [x] Comparison table (vs Nearest Neighbor, Cheapest Insertion, LKH)
-  - [x] Use cases (gaming, logistics, interactive UI)
-- [ ] npm publish (optional - no urgente)
-- [ ] CITATION.cff (optional - solo si se publica)
+- [x] README.md with accurate benchmarks, canonical events, and verified complexity
+- [x] CITATION.cff and MIT LICENSE added
+- [x] npm packaging metadata (exports, main, files, engines) configured
+
+---
+
+## Remediation Roadmap (from Technical Audit)
+
+- [x] **Fase 0: Higiene inmediata** (worktree clean, .prettierignore, CI format check, MIT LICENSE, CITATION.cff, packaging)
+- [x] **Fase 1: Corrección de bugs y contrato de API** (C2 removeCity NaN fix, C1 post-processing contract, A1 generation depth, A2 O(1) batch Map, M8 validations, M3 EXPLICIT error)
+- [x] **Fase 2: Repositorio mínimo reproducible** (Mulberry32 PRNG seed, EXPLICIT handling fix, unified runner scripts/run-benchmarks.js, versioned results/ artifacts, golden values regression)
+- [ ] **Fase 3: Batería experimental para el paper** (instancias masivas, ablación completa, métricas de latencia p50/p95/p99)
+- [ ] **Fase 4: Formalización y redacción del paper** (pseudocódigo formal, prueba de terminación, análisis de cota teórica, related work formal frente a Dynamic/Online TSP)
 
 ---
 

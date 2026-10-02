@@ -173,8 +173,8 @@ I have some ideas to improve the algorithm:
 | **Nearest Neighbor**          | O(N²)          | Extreme speed             | 5-15%               | ❌       |
 | **Cheapest Insertion**        | O(N²)          | Decent quality            | 4-8%                | ❌       |
 | **Savings (Clarke-Wright)**   | O(N²)          | Routes with close points  | 5-10%               | ❌       |
-| **LKH (Simulated Annealing)** | O(N²)          | **Best quality (static)** | 0.5-2%              | ❌       |
-| **👉 Ripple Insertion**       | **O(N log N)** | **Dynamic + Interactive** | **~4%**             | ✅✅✅   |
+| **LKH (Lin-Kernighan-Helsgaun)** | O(N²)-O(N³.²)| **Best quality (static)** | 0.5-2%              | ❌       |
+| **👉 Ripple Insertion**       | Sub-quadratic  | **Dynamic + Interactive** | **~4%**             | ✅✅✅   |
 
 ## 🎯 Use Cases
 
