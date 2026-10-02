@@ -15,6 +15,10 @@ const args = parseArgs({
       short: 'd',
       default: './data',
     },
+    'output-dir': {
+      type: 'string',
+      default: './results',
+    },
     'use-onion': {
       type: 'boolean',
       short: 'o',
@@ -111,12 +115,12 @@ async function runBenchmark() {
     let citiesData = instance.cities || [];
     let N = instance.metadata.dimension;
 
-    // Handle missing coordinates for EXPLICIT instances
+    // Handle missing coordinates for EXPLICIT instances without geometric coordinates
     if (citiesData.length === 0 && N > 0) {
-      citiesData = Array.from({ length: N }, (_, i) => ({
-        x: Math.cos((i / N) * 2 * Math.PI) * 1000,
-        y: Math.sin((i / N) * 2 * Math.PI) * 1000,
-      }));
+      console.warn(
+        `Skipping ${problemName} (N=${N}): EXPLICIT instances without 2D geometric coordinates cannot be indexed by KD-Tree.`
+      );
+      continue;
     }
 
     if (
@@ -150,8 +154,6 @@ async function runBenchmark() {
       explicitWeights,
       maxK: 15,
       adaptiveMaxK: true,
-      enable2Opt: use2Opt,
-      enableOrOpt: useOrOpt,
     });
 
     const startTotal = performance.now();
@@ -228,19 +230,30 @@ async function runBenchmark() {
   // Print nicely formatted table
   console.table(results);
 
-  // Save Markdown Report
-  generateMarkdownReport(results, useOnion, 15, use2Opt, useOrOpt); // Pass maxK and options to report
+  const outputDir = args.values['output-dir'];
+  generateReports(results, useOnion, 15, use2Opt, useOrOpt, outputDir);
 }
 
-function generateMarkdownReport(results, usedOnion, maxK, used2Opt, usedOrOpt) {
-  const mdPath = path.join(process.cwd(), 'benchmark_report.md');
+function generateReports(
+  results,
+  usedOnion,
+  maxK,
+  used2Opt,
+  usedOrOpt,
+  outputDir
+) {
+  const rootMdPath = path.join(process.cwd(), 'benchmark_report.md');
+  const outDir = path.resolve(outputDir);
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
 
   let md = `# Ripple Insertion Benchmark Report\n\n`;
   md += `**Date:** ${new Date().toISOString().split('T')[0]}\n`;
   md += `**Strategy:** ${usedOnion ? 'Onion Peeling' : 'File Order'}\n`;
-  md += `**Neighbors (M):** ${maxK} (adaptive)\n`;
-  md += `**2-opt:** ${used2Opt ? 'Enabled (50 iterations)' : 'Disabled'}\n`;
-  md += `**Or-opt:** ${usedOrOpt ? 'Enabled (50 iterations)' : 'Disabled'}\n\n`;
+  md += `**Neighbors (M):** Adaptive (base: ${maxK}, M = max(${maxK}, floor(4 * log2(N))))\n`;
+  md += `**2-opt:** ${used2Opt ? 'Enabled (post-processing, up to 50 iterations)' : 'Disabled'}\n`;
+  md += `**Or-opt:** ${usedOrOpt ? 'Enabled (post-processing, up to 50 iterations)' : 'Disabled'}\n\n`;
   md += `| Instance | N | Type | Optimal | Achieved | Gap (%) | Time (ms) | Time/Ins (ms) | Ripples/Ins |\n`;
   md += `|---|---|---|---|---|---|---|---|---|\n`;
 
@@ -249,8 +262,28 @@ function generateMarkdownReport(results, usedOnion, maxK, used2Opt, usedOrOpt) {
     md += `| ${r.Instance} | ${r.N} | ${r.Type || 'EUC_2D'} | ${opt} | ${r.Achieved} | ${r['Gap (%)']} | ${r['Time (ms)']} | ${r['Time/Ins (ms)']} | ${r['Ripples/Ins']} |\n`;
   }
 
-  fs.writeFileSync(mdPath, md);
-  console.log(`\n📄 Report saved to: ${mdPath}`);
+  fs.writeFileSync(rootMdPath, md);
+  fs.writeFileSync(path.join(outDir, 'benchmark_report.md'), md);
+
+  // Raw JSON artifact
+  fs.writeFileSync(
+    path.join(outDir, 'benchmark_report.json'),
+    JSON.stringify(results, null, 2)
+  );
+
+  // Raw CSV artifact
+  const headers = Object.keys(results[0] || {});
+  const csvRows = [headers.join(',')];
+  for (const r of results) {
+    csvRows.push(headers.map((h) => JSON.stringify(r[h] ?? '')).join(','));
+  }
+  fs.writeFileSync(
+    path.join(outDir, 'benchmark_report.csv'),
+    csvRows.join('\n')
+  );
+
+  console.log(`\n📄 Report saved to: ${rootMdPath}`);
+  console.log(`📁 Artifacts (JSON, CSV, MD) saved to: ${outDir}`);
 }
 
 runBenchmark().catch(console.error);

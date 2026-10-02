@@ -5,12 +5,17 @@ import {
   onionPeeling,
   getOnionInsertionOrder,
 } from '../src/ripple-insertion.js';
+import { createPRNG } from './prng.js';
 
 const DATA_DIR =
   process.argv.find((a) => a.startsWith('--data-dir='))?.split('=')[1] ||
   './data';
 const ITERATIONS = parseInt(
   process.argv.find((a) => a.startsWith('--iterations='))?.split('=')[1] || '3',
+  10
+);
+const SEED = parseInt(
+  process.argv.find((a) => a.startsWith('--seed='))?.split('=')[1] || '42',
   10
 );
 
@@ -121,7 +126,7 @@ function cheapestInsertionTSP(cities) {
   return { cost };
 }
 
-function randomInsertionTSP(cities) {
+function randomInsertionTSP(cities, prng = Math.random) {
   const n = cities.length;
   if (n <= 2) {
     if (n <= 1) return { cost: 0 };
@@ -140,7 +145,7 @@ function randomInsertionTSP(cities) {
   const tour = [remaining.splice(0, 1)[0]];
 
   while (remaining.length > 0) {
-    const randIdx = Math.floor(Math.random() * remaining.length);
+    const randIdx = Math.floor(prng() * remaining.length);
     const city = remaining.splice(randIdx, 1)[0];
 
     let bestPos = 0;
@@ -173,35 +178,32 @@ function rippleInsertionBaseline(cities) {
   const solver = new RippleInsertion({
     adaptiveMaxK: false,
     maxK: 15,
-    enable2Opt: true,
-    enableOrOpt: true,
   });
   for (const c of cities) solver.addCity(c.id, c.x, c.y);
+  solver.apply2Opt();
   solver.applyOrOpt();
   return { cost: solver.getCost() };
 }
 
 function rippleInsertionAdaptive(cities) {
-  const solver = new RippleInsertion({
-    enable2Opt: true,
-    enableOrOpt: true,
-  });
+  const solver = new RippleInsertion();
   for (const c of cities) solver.addCity(c.id, c.x, c.y);
+  solver.apply2Opt();
   solver.applyOrOpt();
   return { cost: solver.getCost() };
 }
 
 function rippleInsertionNoOpt(cities) {
   const solver = new RippleInsertion({
-    enable2Opt: false,
-    enableOrOpt: false,
+    adaptiveMaxK: false,
+    maxK: 15,
   });
   for (const c of cities) solver.addCity(c.id, c.x, c.y);
   return { cost: solver.getCost() };
 }
 
 function rippleInsertionOnion(cities) {
-  const solver = new RippleInsertion({ enable2Opt: true, enableOrOpt: true });
+  const solver = new RippleInsertion();
   const points = cities.map((c) => ({ id: c.id, x: c.x, y: c.y }));
   const layers = onionPeeling(points);
   const order = getOnionInsertionOrder(layers);
@@ -209,6 +211,7 @@ function rippleInsertionOnion(cities) {
     const c = cities[id];
     solver.addCity(c.id, c.x, c.y);
   }
+  solver.apply2Opt();
   solver.applyOrOpt();
   return { cost: solver.getCost() };
 }
@@ -224,6 +227,7 @@ function runBenchmark() {
     process.exit(1);
   }
 
+  const randomPrng = createPRNG(SEED);
   const algorithms = [
     { name: 'Nearest Neighbor', fn: nearestNeighborTSP },
     { name: 'Cheapest Insertion', fn: cheapestInsertionTSP },
@@ -232,7 +236,7 @@ function runBenchmark() {
       fn: (cities) => {
         let best = Infinity;
         for (let r = 0; r < 5; r++) {
-          const res = randomInsertionTSP(cities);
+          const res = randomInsertionTSP(cities, randomPrng);
           if (res.cost < best) best = res.cost;
         }
         return { cost: best };

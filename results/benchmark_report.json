@@ -1,0 +1,68 @@
+[
+  {
+    "Instance": "eil51",
+    "N": 51,
+    "Type": "EUC_2D",
+    "Optimal": 426,
+    "Achieved": 444,
+    "Gap (%)": "4.23%",
+    "Time (ms)": "7.4",
+    "Time/Ins (ms)": "0.143",
+    "Ripples/Ins": "16.1"
+  },
+  {
+    "Instance": "berlin52",
+    "N": 52,
+    "Type": "EUC_2D",
+    "Optimal": 7542,
+    "Achieved": 7783,
+    "Gap (%)": "3.20%",
+    "Time (ms)": "16.1",
+    "Time/Ins (ms)": "0.288",
+    "Ripples/Ins": "16.3"
+  },
+  {
+    "Instance": "st70",
+    "N": 70,
+    "Type": "EUC_2D",
+    "Optimal": 675,
+    "Achieved": 691,
+    "Gap (%)": "2.37%",
+    "Time (ms)": "6.1",
+    "Time/Ins (ms)": "0.083",
+    "Ripples/Ins": "17.9"
+  },
+  {
+    "Instance": "kroA100",
+    "N": 100,
+    "Type": "EUC_2D",
+    "Optimal": 21282,
+    "Achieved": 21292,
+    "Gap (%)": "0.05%",
+    "Time (ms)": "13.5",
+    "Time/Ins (ms)": "0.128",
+    "Ripples/Ins": "20.3"
+  },
+  {
+    "Instance": "ch130",
+    "N": 130,
+    "Type": "EUC_2D",
+    "Optimal": 6110,
+    "Achieved": 6372,
+    "Gap (%)": "4.29%",
+    "Time (ms)": "32.0",
+    "Time/Ins (ms)": "0.232",
+    "Ripples/Ins": "21.7"
+  },
+  {
+    "Instance": "ch150",
+    "N": 150,
+    "Type": "EUC_2D",
+    "Optimal": 6528,
+    "Achieved": 6691,
+    "Gap (%)": "2.50%",
+    "Time (ms)": "24.9",
+    "Time/Ins (ms)": "0.158",
+    "Ripples/Ins": "22.9"
+  }
+]

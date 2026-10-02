@@ -20,8 +20,9 @@
   },
   "scripts": {
     "test": "node --test",
-    "format": "prettier --write src test benchmark demo",
-    "format:check": "prettier --check src test benchmark demo"
+    "benchmark": "node scripts/run-benchmarks.js",
+    "format": "prettier --write src test benchmark demo scripts",
+    "format:check": "prettier --check src test benchmark demo scripts"
   },
   "devDependencies": {
     "prettier": "^3.0.0"

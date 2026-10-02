@@ -1,14 +1,21 @@
 import { RippleInsertion } from '../src/ripple-insertion.js';
+import { createPRNG } from './prng.js';
+
+const SEED = parseInt(
+  process.argv.find((a) => a.startsWith('--seed='))?.split('=')[1] || '42',
+  10
+);
 
 const SIZES = [1000, 5000, 10000];
 
-function generateRandomCities(n) {
+function generateRandomCities(n, seed = SEED) {
+  const prng = createPRNG(seed);
   const cities = [];
   for (let i = 0; i < n; i++) {
     cities.push({
       id: i,
-      x: Math.random() * 10000,
-      y: Math.random() * 10000,
+      x: prng() * 10000,
+      y: prng() * 10000,
     });
   }
   return cities;
@@ -42,7 +49,7 @@ function runStressTest(n, options = {}) {
   const memBefore = getMemoryUsage();
   const startTime = performance.now();
 
-  const solver = new RippleInsertion({ enable2Opt, enableOrOpt });
+  const solver = new RippleInsertion();
 
   // Phase 1: Insertion
   const insertStart = performance.now();
@@ -61,6 +68,11 @@ function runStressTest(n, options = {}) {
 
   // Phase 2: Post-processing
   let postProcessTime = 0;
+  if (enable2Opt) {
+    const t0 = performance.now();
+    solver.apply2Opt();
+    postProcessTime += performance.now() - t0;
+  }
   if (enableOrOpt) {
     const t0 = performance.now();
     solver.applyOrOpt();
