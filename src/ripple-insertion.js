@@ -185,13 +185,8 @@ export class RippleInsertion extends EventTarget {
     this.maxK = options.maxK || 20;
     this.adaptiveMaxK = options.adaptiveMaxK ?? true;
 
-    // 2-opt options
-    this.enable2Opt = options.enable2Opt || false;
+    // Post-processing options
     this.max2OptIterations = options.max2OptIterations || 50;
-    this._twoOptApplied = false; // Track if 2-opt has been applied
-
-    // Or-opt options
-    this.enableOrOpt = options.enableOrOpt || false;
     this.maxOrOptIterations = options.maxOrOptIterations || 50;
 
     this.cities = [];
@@ -231,7 +226,9 @@ export class RippleInsertion extends EventTarget {
         ) {
           return this.explicitWeights[a.id][b.id];
         }
-        return distEUC2D(origA, origB);
+        throw new Error(
+          `Explicit weight missing for city pair (${a.id}, ${b.id})`
+        );
       case 'EUC_2D':
       default:
         return distEUC2D(origA, origB);
@@ -255,6 +252,23 @@ export class RippleInsertion extends EventTarget {
    * @param {number} originalY - Original Y coordinate (optional, for TSPLIB)
    */
   addCity(id, x, y, originalX = null, originalY = null) {
+    if (typeof id !== 'number' || !Number.isInteger(id)) {
+      throw new TypeError(`City id must be an integer, got: ${id}`);
+    }
+    if (
+      typeof x !== 'number' ||
+      typeof y !== 'number' ||
+      !Number.isFinite(x) ||
+      !Number.isFinite(y)
+    ) {
+      throw new TypeError(
+        `City coordinates must be finite numbers, got x=${x}, y=${y}`
+      );
+    }
+    if (this.tour.has(id)) {
+      throw new Error(`City with id ${id} already exists in the tour`);
+    }
+
     const newCity = { id, x, y };
     // Ensure array grows appropriately if ids are not sequential
     this.cities[id] = newCity;
@@ -268,28 +282,15 @@ export class RippleInsertion extends EventTarget {
 
     // Initial simple circular tour
     if (this.tour.size < 3) {
-      this.tour.insertAfter(this.tour.head, id);
-      if (this.tour.size === 3) {
-        // Complete the circle when 3 cities are added
-        const nodes = Array.from(this.tour).map((cId) =>
-          this.tour.getNode(cId)
-        );
-        if (nodes.length === 3) {
-          nodes[0].next = nodes[1];
-          nodes[1].prev = nodes[0];
-          nodes[1].next = nodes[2];
-          nodes[2].prev = nodes[1];
-          nodes[2].next = nodes[0];
-          nodes[0].prev = nodes[2];
-        }
-      }
+      const prevNode = this.tour.head ? this.tour.head.prev : null;
+      this.tour.insertAfter(prevNode, id);
       this.dispatchEvent(
         new SafeCustomEvent('tourUpdated', { detail: { id } })
       );
       return {
         iterations: 0,
         maxDepth: 0,
-        twoOpt: { iterations: 0, improvements: 0 },
+        relocatedCount: 0,
       };
     } else {
       return this._insertAndOptimize(id);
@@ -386,21 +387,29 @@ export class RippleInsertion extends EventTarget {
    */
   removeCity(cityId) {
     if (this.tour.size === 0) {
-      return { iterations: 0, maxDepth: 0, removedCost: 0 };
+      return { iterations: 0, maxDepth: 0, relocatedCount: 0, removedCost: 0 };
     }
 
     const node = this.tour.getNode(cityId);
     if (!node) {
-      return { iterations: 0, maxDepth: 0, removedCost: 0 };
+      return { iterations: 0, maxDepth: 0, relocatedCount: 0, removedCost: 0 };
     }
 
     const prevNode = node.prev;
     const nextNode = node.next;
 
-    const removedCost =
-      this.dist(this.cities[cityId], prevNode) +
-      this.dist(this.cities[cityId], nextNode) -
-      this.dist(this.cities[prevNode.cityId], this.cities[nextNode.cityId]);
+    let removedCost = 0;
+    if (this.tour.size === 1) {
+      removedCost = 0;
+    } else if (this.tour.size === 2) {
+      removedCost =
+        2 * this.dist(this.cities[cityId], this.cities[prevNode.cityId]);
+    } else {
+      removedCost =
+        this.dist(this.cities[cityId], this.cities[prevNode.cityId]) +
+        this.dist(this.cities[cityId], this.cities[nextNode.cityId]) -
+        this.dist(this.cities[prevNode.cityId], this.cities[nextNode.cityId]);
+    }
 
     this.tour.remove(node);
     delete this.cities[cityId];
@@ -413,7 +422,7 @@ export class RippleInsertion extends EventTarget {
           detail: { id: cityId, removed: true },
         })
       );
-      return { iterations: 0, maxDepth: 0, removedCost };
+      return { iterations: 0, maxDepth: 0, relocatedCount: 0, removedCost };
     }
 
     const affectedSet = this.setPool.acquire();
@@ -449,11 +458,16 @@ export class RippleInsertion extends EventTarget {
       insertionOrder = getOnionInsertionOrder(layers);
     }
 
+    const cityMap = new Map();
+    for (const city of cities) {
+      cityMap.set(city.id, city);
+    }
+
     const startTime = performance.now();
     let totalIterations = 0;
 
     for (const cityId of insertionOrder) {
-      const city = cities.find((c) => c.id === cityId);
+      const city = cityMap.get(cityId);
       if (city) {
         const result = this.addCity(city.id, city.x, city.y);
         totalIterations += result.iterations;
@@ -476,13 +490,12 @@ export class RippleInsertion extends EventTarget {
    * Should be called after all cities have been added.
    * @returns {{ iterations: number, improvements: number }}
    */
-  apply2Opt() {
+  apply2Opt(maxIterations = this.max2OptIterations) {
     if (this.tour.size < 4) {
       return { iterations: 0, improvements: 0 };
     }
 
-    const stats = this._twoOptOptimize();
-    this._twoOptApplied = true;
+    const stats = this._twoOptOptimize(maxIterations);
 
     this.dispatchEvent(
       new SafeCustomEvent('tourUpdated', { detail: { id: '2opt' } })
@@ -497,7 +510,7 @@ export class RippleInsertion extends EventTarget {
    * @param {number} maxIterations - Maximum passes over the tour (default: 50)
    * @returns {{ iterations: number, improvements: number }}
    */
-  applyOrOpt(maxIterations = 50) {
+  applyOrOpt(maxIterations = this.maxOrOptIterations) {
     if (this.tour.size < 4) {
       return { iterations: 0, improvements: 0 };
     }
@@ -566,7 +579,7 @@ export class RippleInsertion extends EventTarget {
    * Reverses tour segments to eliminate edge crossings.
    * @returns {{ iterations: number, improvements: number }}
    */
-  _twoOptOptimize() {
+  _twoOptOptimize(maxIterations = this.max2OptIterations) {
     let improvements = 0;
     let iterations = 0;
     const n = this.tour.size;
@@ -575,7 +588,7 @@ export class RippleInsertion extends EventTarget {
 
     const tourArray = this.tour.toArray();
 
-    for (let i = 0; i < Math.min(this.max2OptIterations, n); i++) {
+    for (let i = 0; i < Math.min(maxIterations, n); i++) {
       let improved = false;
 
       for (let a = 0; a < n - 1; a++) {
@@ -607,9 +620,9 @@ export class RippleInsertion extends EventTarget {
             }
           }
         }
-        iterations++;
       }
 
+      iterations++;
       if (!improved) break;
     }
 
@@ -655,20 +668,29 @@ export class RippleInsertion extends EventTarget {
 
   _optimizeRipple(initialSet) {
     let modified = this.setPool.acquire();
-    initialSet.forEach((id) => modified.add(id));
+    const depthMap = new Map();
+
+    initialSet.forEach((id) => {
+      modified.add(id);
+      depthMap.set(id, 0);
+    });
 
     let iterations = 0;
     let maxDepth = 0;
+    let relocatedCount = 0;
 
     while (modified.size > 0) {
       iterations++;
-      maxDepth = Math.max(maxDepth, iterations);
 
       const currentCityId = modified.values().next().value;
+      const currentDepth = depthMap.get(currentCityId) || 0;
+      maxDepth = Math.max(maxDepth, currentDepth);
+
       const currentNode = this.tour.getNode(currentCityId);
 
       if (!currentNode) {
         modified.delete(currentCityId);
+        depthMap.delete(currentCityId);
         continue;
       }
 
@@ -733,22 +755,34 @@ export class RippleInsertion extends EventTarget {
       }
 
       if (bestMove.gain > 0) {
+        relocatedCount++;
         const oldPrev = currentNode.prev;
         const oldNext = currentNode.next;
 
         this.tour.moveToAfter(currentNode, bestMove.targetNode);
 
-        modified.add(oldPrev.cityId);
-        modified.add(oldNext.cityId);
-        modified.add(bestMove.targetNode.cityId);
-        modified.add(bestMove.targetNode.next.cityId);
-        modified.add(currentCityId);
+        const nextDepth = currentDepth + 1;
+        const affected = [
+          oldPrev.cityId,
+          oldNext.cityId,
+          bestMove.targetNode.cityId,
+          bestMove.targetNode.next.cityId,
+          currentCityId,
+        ];
+
+        for (const affId of affected) {
+          modified.add(affId);
+          const prevD = depthMap.get(affId) ?? 0;
+          depthMap.set(affId, Math.max(prevD, nextDepth));
+        }
+        maxDepth = Math.max(maxDepth, nextDepth);
       }
 
       modified.delete(currentCityId);
+      depthMap.delete(currentCityId);
     }
 
-    const stats = { iterations, maxDepth };
+    const stats = { iterations, maxDepth, relocatedCount };
     this.setPool.release(modified);
     return stats;
   }

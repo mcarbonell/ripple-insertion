@@ -68,8 +68,8 @@ describe('Edge Case Testing (Phase 9.1)', () => {
       assertValidTour(solver, 9);
     });
 
-    it('should handle dense cluster with 2-opt enabled', () => {
-      const solver = new RippleInsertion({ enable2Opt: true });
+    it('should handle dense cluster with 2-opt post-processing', () => {
+      const solver = new RippleInsertion();
       for (let i = 0; i < 10; i++) {
         solver.addCity(i, 50 + Math.random() * 0.01, 50 + Math.random() * 0.01);
       }
@@ -333,19 +333,18 @@ describe('Edge Case Testing (Phase 9.1)', () => {
   });
 
   describe('Algorithm correctness', () => {
-    it('should produce same or better cost with 2-opt enabled during insertion', () => {
+    it('should produce same or better cost with 2-opt post-processing', () => {
       const cities = [];
       for (let i = 0; i < 15; i++) {
         cities.push({ id: i, x: Math.random() * 200, y: Math.random() * 200 });
       }
 
-      const solverPlain = new RippleInsertion();
-      for (const c of cities) solverPlain.addCity(c.id, c.x, c.y);
-      const costPlain = solverPlain.getCost();
+      const solver = new RippleInsertion();
+      for (const c of cities) solver.addCity(c.id, c.x, c.y);
+      const costPlain = solver.getCost();
 
-      const solver2Opt = new RippleInsertion({ enable2Opt: true });
-      for (const c of cities) solver2Opt.addCity(c.id, c.x, c.y);
-      const cost2Opt = solver2Opt.getCost();
+      solver.apply2Opt();
+      const cost2Opt = solver.getCost();
 
       assert.ok(
         cost2Opt <= costPlain + 0.001,
@@ -370,15 +369,13 @@ describe('Edge Case Testing (Phase 9.1)', () => {
     });
 
     it('should produce valid tour with all optimizations combined', () => {
-      const solver = new RippleInsertion({
-        enable2Opt: true,
-        enableOrOpt: true,
-      });
+      const solver = new RippleInsertion();
 
       for (let i = 0; i < 20; i++) {
         solver.addCity(i, Math.random() * 300, Math.random() * 300);
       }
 
+      solver.apply2Opt();
       solver.applyOrOpt();
 
       assertValidTour(solver, 20);
