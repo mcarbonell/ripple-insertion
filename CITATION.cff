@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite it as below."
+authors:
+  - family-names: "Carbonell Martínez"
+    given-names: "Mario Raúl"
+    email: "marioraulcarbonell@gmail.com"
+title: "Ripple Insertion: A Dynamic Traveling Salesperson Problem Solver with Cascading Local Relocation"
+version: 1.0.0
+date-released: 2026-03-21
+url: "https://github.com/mcarbonell/ripple-insertion"
+license: MIT
+keywords:
+  - "traveling-salesperson-problem"
+  - "dynamic-tsp"
+  - "online-algorithms"
+  - "local-search"
+  - "kd-tree"

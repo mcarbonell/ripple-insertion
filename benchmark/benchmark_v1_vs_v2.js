@@ -3,7 +3,7 @@
  */
 
 import performance from 'node:perf_hooks';
-import RippleInsertionV2 from '../src/ripple-insertion-v2.js';
+import RippleInsertionV2 from '../src/experimental/ripple-insertion-v2.js';
 
 // Mock Spatial Index (Simplified)
 class SimpleSpatialIndex {

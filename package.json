@@ -1,12 +1,27 @@
 {
   "name": "ripple-insertion",
   "version": "1.0.0",
-  "description": "O(N log N) Dynamic TSP algorithm - Ripple Insertion",
+  "description": "Dynamic TSP algorithm with spatial indexing and cascading local relocation (Ripple Insertion)",
   "type": "module",
+  "main": "./src/ripple-insertion.js",
+  "module": "./src/ripple-insertion.js",
+  "exports": {
+    ".": "./src/ripple-insertion.js",
+    "./kd-tree": "./src/kd-tree.js",
+    "./doubly-linked-tour": "./src/doubly-linked-tour.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "test": "npm run format && node --test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "test": "node --test",
+    "format": "prettier --write src test benchmark demo",
+    "format:check": "prettier --check src test benchmark demo"
   },
   "devDependencies": {
     "prettier": "^3.0.0"
@@ -14,7 +29,9 @@
   "keywords": [
     "tsp",
     "dynamic-tsp",
-    "algorithm",
+    "online-algorithms",
+    "spatial-index",
+    "kd-tree",
     "optimization"
   ],
   "author": "Mario Raúl Carbonell Martínez",
