@@ -14,6 +14,17 @@
 \usepackage{xcolor}
 \usepackage{multirow}
 
+% Compact bibliography formatting
+\let\oldthebibliography\thebibliography
+\let\endoldthebibliography\endthebibliography
+\renewenvironment{thebibliography}[1]{%
+  \begin{oldthebibliography}{#1}%
+    \setlength{\itemsep}{0.2em}%
+    \setlength{\parskip}{0em}%
+}{%
+  \end{oldthebibliography}%
+}
+
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
 \newtheorem{invariant}{Invariant}
@@ -129,7 +140,7 @@ When city $x$ arrives:
 
 The insertion of $x$ alters the geometric equilibrium of its neighborhood. Phase 2 executes a breadth-first wavefront cascade.
 
-\begin{algorithm}[t]
+\begin{algorithm}[!htbp]
 \caption{\textbf{Ripple Wavefront Relocation Cascade}}
 \label{alg:ripple}
 \begin{algorithmic}[1]
