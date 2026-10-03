@@ -3,34 +3,35 @@
 This directory contains the formal academic manuscript, LaTeX sources, bibliography, and reproduction artifacts for the paper:
 
 > **"Ripple Insertion: A Dynamic Routing Heuristic with Spatial Indexing and Cascading Local Relocation for Online TSP"**  
-> *Author:* Mario Raúl Carbonell Martínez  
+> *Author:* Mario Raúl Carbonell Martínez (\texttt{marioraulcarbonell@gmail.com})  
 
 ---
 
 ## Files in this Directory
 
+- `main.pdf` / `paper.pdf`: Pre-compiled publication-grade PDF manuscript (8 pages, formatted in pre-print standard layout).
+- `main.tex` / `paper.tex`: Publication-ready LaTeX source file matching the standard pre-print style of the research suite.
 - `paper.md`: Complete, self-contained academic manuscript in GitHub Flavored Markdown with mathematical formulas, algorithms, benchmark tables, and references.
-- `paper.tex`: Publication-ready LaTeX source file formatted for computer science conferences and journals (GECCO, ALENEX, Journal of Heuristics).
-- `references.bib`: BibTeX bibliography file with complete citations.
+- `references.bib`: BibTeX bibliography file with complete peer-reviewed citations.
 - `README.md`: This file.
 
 ---
 
 ## Compiling the LaTeX Manuscript
 
-To compile `paper.tex` into a PDF:
+To compile `main.tex` into a PDF:
 
 ```bash
-pdflatex paper.tex
-bibtex paper
-pdflatex paper.tex
-pdflatex paper.tex
+pdflatex main.tex
+bibtex main
+pdflatex main.tex
+pdflatex main.tex
 ```
 
 Or using `latexmk`:
 
 ```bash
-latexmk -pdf paper.tex
+latexmk -pdf main.tex
 ```
 
 ---

@@ -7,3 +7,11 @@ dist/
 docs/private/
 
 .kilo/
+
+# LaTeX auxiliary build files
+*.aux
+*.blg
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
