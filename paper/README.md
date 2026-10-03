@@ -9,8 +9,8 @@ This directory contains the formal academic manuscript, LaTeX sources, bibliogra
 
 ## Files in this Directory
 
-- `main.pdf` / `paper.pdf`: Pre-compiled publication-grade PDF manuscript (8 pages, formatted in pre-print standard layout).
-- `main.tex` / `paper.tex`: Publication-ready LaTeX source file matching the standard pre-print style of the research suite.
+- `main.pdf`: Pre-compiled publication-grade PDF manuscript (7 pages, formatted in pre-print standard layout).
+- `main.tex`: Publication-ready LaTeX source file matching the standard pre-print style of the research suite.
 - `paper.md`: Complete, self-contained academic manuscript in GitHub Flavored Markdown with mathematical formulas, algorithms, benchmark tables, and references.
 - `references.bib`: BibTeX bibliography file with complete peer-reviewed citations.
 - `README.md`: This file.
